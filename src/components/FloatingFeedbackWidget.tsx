@@ -14,6 +14,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { ThemeColors } from '../utils/theme.ts';
+import { insertFeedbackToSupabase } from '../utils/supabase.ts';
 
 interface UserReview {
   id: string;
@@ -162,6 +163,14 @@ export const FloatingFeedbackWidget: React.FC<FloatingFeedbackWidgetProps> = ({
     } catch {
       // ignore
     }
+
+    // Save directly to Supabase
+    insertFeedbackToSupabase({
+      category: 'student-review',
+      rating: rating > 0 ? rating : 5,
+      feedbackText: `${reviewComment.trim()} (by ${author})`,
+      userEmail: currentUser || undefined,
+    }).catch((err) => console.warn('Supabase review sync error:', err));
 
     setSubmittedMessage(true);
     setReviewComment('');

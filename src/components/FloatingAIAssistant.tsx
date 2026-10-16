@@ -62,6 +62,8 @@ export interface ChatMessage {
   citations?: SourceCitation[];
   hasWebsiteSources?: boolean;
   error?: boolean;
+  source?: string;
+  apiEndpoint?: string;
 }
 
 export interface ChatSession {
@@ -204,7 +206,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
         role: 'assistant',
         content: `👋 Hi ${
           currentUser ? currentUser.split('@')[0] : 'there'
-        }! I'm your **Study Space AI Academic Assistant**.\n\nI am connected to your **StudySpace Website Library & Uploaded Materials**.\n\n🔍 **What I can do with your materials:**\n- 📚 Answer questions using your uploaded study decks and notes with citations\n- ⚡ Break down complex exam topics, formulas, and concepts from your materials\n- 🔒 Keep your private notes strictly confidential with user authorization\n- 📅 Build customized daily revision roadmaps based on your active study tasks\n\nAsk me anything about your study goals or materials!`,
+        }! I am connected to your **ChatGPT Chatbot API** at \`http://127.0.0.1:8000/chatgpt\` and your **StudySpace Website Library**.\n\n🔍 **What we can do:**\n- 🤖 Chat directly through your local ChatGPT API endpoint (\`http://127.0.0.1:8000/chatgpt\`)\n- 📚 Review questions using your uploaded study materials, notes, and citations\n- ⚡ Break down complex exam topics, formulas, and concepts\n- 📅 Synthesize daily revision schedules based on your active study tasks\n\nAsk me anything!`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ];
@@ -349,6 +351,8 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
           suggestedAction: data.suggestedAction || null,
           citations: data.citations || [],
           hasWebsiteSources: Boolean(data.hasWebsiteSources),
+          source: data.source || 'chatgpt-api',
+          apiEndpoint: data.apiEndpoint || 'http://127.0.0.1:8000/chatgpt',
         },
       ]);
       // Update citation expanded view to the newest response if it has sources
@@ -646,8 +650,8 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
             boxShadow:
               '0 10px 32px -4px rgba(48, 39, 71, 0.65), 0 0 24px 3px rgba(142, 116, 219, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.35)',
           }}
-          aria-label={isOpen ? 'Close Study Space AI Assistant' : 'Open Study Space AI Assistant (All User Entries Access Granted)'}
-          title="StudySpace AI • Full Permission Granted to Tasks, Uploads & Pinned Entries"
+          aria-label={isOpen ? 'Close ChatGPT AI Assistant' : 'Open ChatGPT AI Assistant (Connected to http://127.0.0.1:8000/chatgpt)'}
+          title="ChatGPT Chatbot • Connected to http://127.0.0.1:8000/chatgpt"
         >
           {/* Luminous background pulse & refined specular glass highlight (Target Element) */}
           <span
@@ -663,7 +667,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
           <Sparkles className="w-6 h-6 text-purple-200 group-hover:rotate-12 transition-transform duration-300 relative z-10" />
 
           {/* Verified All-Access Badge */}
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 z-20" title="Full Permission Granted: Tasks, Uploads & Pinned">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 z-20" title="Connected to ChatGPT API (http://127.0.0.1:8000/chatgpt)">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-[#302747] items-center justify-center text-[8px] font-black text-white">
               ✓
@@ -704,11 +708,17 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
                   <Bot className="w-5 h-5 text-purple-300" />
                 </div>
                 <div>
-                  <h2 id="ai-assistant-title" className="font-extrabold text-sm tracking-tight" style={{ color: theme.textPrimary }}>
-                    StudySpace AI
-                  </h2>
-                  <p className="text-[10.5px] opacity-75" style={{ color: theme.textSecondary }}>
-                    <span>{currentUser ? currentUser.split('@')[0] : 'Study Assistant'}</span>
+                  <div className="flex items-center gap-1.5">
+                    <h2 id="ai-assistant-title" className="font-extrabold text-sm tracking-tight" style={{ color: theme.textPrimary }}>
+                      ChatGPT Assistant
+                    </h2>
+                    <span className="px-1.5 py-0.2 rounded font-mono font-bold text-[9px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                      Live API
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>http://127.0.0.1:8000/chatgpt</span>
                   </p>
                 </div>
               </div>
@@ -853,9 +863,14 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
                     className="flex items-center gap-1.5 mb-1 px-1 text-[10px] opacity-70"
                     style={{ color: theme.textSecondary }}
                   >
-                    <span>{isUser ? (currentUser ? currentUser.split('@')[0] : 'You') : 'Study Space AI'}</span>
+                    <span>{isUser ? (currentUser ? currentUser.split('@')[0] : 'You') : 'ChatGPT'}</span>
                     <span>•</span>
                     <span>{msg.timestamp}</span>
+                    {!isUser && (
+                      <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        http://127.0.0.1:8000/chatgpt
+                      </span>
+                    )}
                     {!isUser && msg.hasWebsiteSources && (
                       <span className="text-emerald-400 font-semibold">• Grounded in Library</span>
                     )}
@@ -1136,8 +1151,28 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
                 </div>
               </div>
 
-              {/* Gemini AI Status */}
-              <div className="p-3 rounded-2xl border flex items-start gap-3" style={{ borderColor: theme.surfaceBorder }}>
+              {/* ChatGPT Chatbot API Status */}
+              <div className="p-3 rounded-2xl border flex items-start gap-3 bg-emerald-500/5" style={{ borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+                <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 shrink-0">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm">ChatGPT Chatbot API</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      Target Connected
+                    </span>
+                  </div>
+                  <p className="mt-1 font-mono text-[11px] text-emerald-600 dark:text-emerald-300">
+                    http://127.0.0.1:8000/chatgpt
+                  </p>
+                  <p className="mt-1 text-[11px] opacity-75" style={{ color: theme.textSecondary }}>
+                    Queries are dispatched to your custom ChatGPT chatbot API endpoint with automatic RAG grounding from your StudySpace notes.
+                  </p>
+                </div>
+              </div>
+
+              {/* Gemini AI Status */}<div className="p-3 rounded-2xl border flex items-start gap-3" style={{ borderColor: theme.surfaceBorder }}>
                 <div className="p-2 rounded-xl bg-purple-500/15 text-purple-400 shrink-0">
                   <Sparkles className="w-4 h-4" />
                 </div>

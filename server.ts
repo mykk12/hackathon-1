@@ -45,14 +45,18 @@ if (apiKey) {
 }
 
 // Supabase environment check (never exposes secret keys)
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const DEFAULT_SUPABASE_URL = 'https://yuppwsutqtyrfvzdchcz.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable__JFjKMVCUqNuZY1ZeGIIFw_2_bh7p__';
+
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 let supabaseServer: SupabaseClient | null = null;
 if (supabaseUrl && (supabaseServiceKey || supabaseAnonKey)) {
   try {
     supabaseServer = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey!);
+    console.log('[Supabase Server] Connected to project:', supabaseUrl);
   } catch (err) {
     console.warn('Could not initialize Supabase server client:', err);
   }
@@ -349,6 +353,87 @@ app.post('/api/ai/chat', async (req, res) => {
 
     const hasWebsiteSources = retrievedResults.length > 0;
 
+    // -------------------------------------------------------------
+    // Try custom ChatGPT chatbot API first (http://127.0.0.1:8000/chatgpt)
+    // -------------------------------------------------------------
+    const CHATGPT_API_URL = process.env.CHATGPT_API_URL || 'http://127.0.0.1:8000/chatgpt';
+    let chatGptReply = '';
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const chatHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/plain, */*',
+      };
+      const authHeader = req.headers.authorization || (process.env.OPENAI_API_KEY ? `Bearer ${process.env.OPENAI_API_KEY}` : undefined) || (process.env.CHATGPT_API_KEY ? `Bearer ${process.env.CHATGPT_API_KEY}` : undefined);
+      if (authHeader) {
+        chatHeaders['Authorization'] = authHeader;
+      }
+
+      const chatGptRes = await fetch(CHATGPT_API_URL, {
+        method: 'POST',
+        headers: chatHeaders,
+        body: JSON.stringify({
+          prompt: userQuery,
+          message: userQuery,
+          query: userQuery,
+          text: userQuery,
+          messages,
+          context: {
+            ...context,
+            retrievedSources: citations,
+          },
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (chatGptRes.ok) {
+        const contentType = chatGptRes.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const json = await chatGptRes.json();
+          chatGptReply =
+            json.reply ||
+            json.response ||
+            json.message ||
+            json.content ||
+            json.answer ||
+            json.result ||
+            json.choices?.[0]?.message?.content ||
+            (typeof json === 'string' ? json : JSON.stringify(json));
+        } else {
+          chatGptReply = await chatGptRes.text();
+        }
+        console.log(`[ChatGPT API] Successfully received response from ${CHATGPT_API_URL}`);
+      }
+    } catch (chatGptErr) {
+      console.log(`[ChatGPT API] http://127.0.0.1:8000/chatgpt offline or unreachable, using fallback: ${(chatGptErr as Error).message}`);
+    }
+
+    if (chatGptReply && chatGptReply.trim()) {
+      let suggestedAction: string | null = null;
+      if (chatGptReply.includes('[Action: Go to Study Plan]')) {
+        suggestedAction = 'study-plan';
+      } else if (chatGptReply.includes('[Action: Go to Manage]')) {
+        suggestedAction = 'manage';
+      } else if (chatGptReply.includes('[Action: Go to Dashboard]')) {
+        suggestedAction = 'dashboard';
+      } else if (chatGptReply.includes('[Action: Go to Home]')) {
+        suggestedAction = 'home';
+      }
+
+      return res.json({
+        reply: chatGptReply,
+        citations,
+        hasWebsiteSources,
+        suggestedAction,
+        source: 'chatgpt-api',
+        apiEndpoint: CHATGPT_API_URL,
+      });
+    }
+
     // Construct grounded context block
     let ragGroundingBlock = '';
     if (hasWebsiteSources) {
@@ -516,6 +601,71 @@ ${ragGroundingBlock}`;
     console.error('Gemini chat error:', error);
     res.status(500).json({
       error: error.message || 'Failed to generate response from Gemini API.',
+    });
+  }
+});
+
+// ChatGPT API status check endpoint
+app.get('/api/chatgpt/status', async (req, res) => {
+  const CHATGPT_API_URL = process.env.CHATGPT_API_URL || 'http://127.0.0.1:8000/chatgpt';
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const apiRes = await fetch(CHATGPT_API_URL, {
+      method: 'GET',
+      signal: controller.signal,
+    }).catch(() => null);
+    clearTimeout(timeoutId);
+
+    res.json({
+      configured: true,
+      url: CHATGPT_API_URL,
+      connected: !!apiRes,
+      status: apiRes ? apiRes.status : 'offline',
+      message: apiRes
+        ? `Connected to ChatGPT API at ${CHATGPT_API_URL}`
+        : `ChatGPT API target configured: ${CHATGPT_API_URL}. (Start your local API server on port 8000 to send requests directly to it).`,
+    });
+  } catch (err: unknown) {
+    const error = err as Error;
+    res.json({
+      configured: true,
+      url: CHATGPT_API_URL,
+      connected: false,
+      message: error.message,
+    });
+  }
+});
+
+// Dedicated proxy route directly forwarding to ChatGPT API
+app.post('/api/chatgpt', async (req, res) => {
+  const CHATGPT_API_URL = process.env.CHATGPT_API_URL || 'http://127.0.0.1:8000/chatgpt';
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    const authHeader = req.headers.authorization || (process.env.OPENAI_API_KEY ? `Bearer ${process.env.OPENAI_API_KEY}` : undefined) || (process.env.CHATGPT_API_KEY ? `Bearer ${process.env.CHATGPT_API_KEY}` : undefined);
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const apiRes = await fetch(CHATGPT_API_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(req.body),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const data = await apiRes.json().catch(async () => ({ text: await apiRes.text() }));
+    res.status(apiRes.status).json(data);
+  } catch (err: unknown) {
+    const error = err as Error;
+    res.status(502).json({
+      error: `Could not connect to ChatGPT API at ${CHATGPT_API_URL}: ${error.message}`,
+      endpoint: CHATGPT_API_URL,
     });
   }
 });

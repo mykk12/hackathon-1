@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { MessageSquareQuote, Send, CheckCircle2, Star, Sparkles, ArrowLeft } from 'lucide-react';
 import { ThemeColors } from '../utils/theme.ts';
 
+import { insertFeedbackToSupabase } from '../utils/supabase.ts';
+
 interface FeedbackViewProps {
   theme: ThemeColors;
   onGoToHome: () => void;
+  currentUser?: string | null;
 }
 
-export const FeedbackView: React.FC<FeedbackViewProps> = ({ theme, onGoToHome }) => {
+export const FeedbackView: React.FC<FeedbackViewProps> = ({ theme, onGoToHome, currentUser }) => {
   const [category, setCategory] = useState<'subject-request' | 'resource-quality' | 'platform-suggestion' | 'general'>('subject-request');
   const [rating, setRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
@@ -17,6 +20,15 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ theme, onGoToHome })
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedbackText.trim()) return;
+
+    // Save directly to Supabase user_feedback table
+    insertFeedbackToSupabase({
+      category,
+      rating: rating > 0 ? rating : 5,
+      feedbackText: feedbackText.trim(),
+      contactEmail: contactEmail.trim() || undefined,
+      userEmail: currentUser || undefined,
+    }).catch((err) => console.warn('Supabase feedback save error:', err));
 
     setSubmitted(true);
     setTimeout(() => {

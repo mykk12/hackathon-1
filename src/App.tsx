@@ -31,7 +31,19 @@ import {
   saveBookmarks,
   filterAcademicResources,
 } from './utils/resources.ts';
-import { insertUserEntryToSupabase } from './utils/supabase.ts';
+import {
+  insertUserEntryToSupabase,
+  fetchAllResourcesFromSupabase,
+  insertResourceToSupabase,
+  updateResourceInSupabase,
+  deleteResourceFromSupabase,
+  fetchStudyTasksFromSupabase,
+  insertStudyTaskToSupabase,
+  updateStudyTaskInSupabase,
+  fetchBookmarksFromSupabase,
+  saveBookmarkToSupabase,
+  removeBookmarkFromSupabase,
+} from './utils/supabase.ts';
 
 export default function App() {
   // Theme & Grayscale Background Slider State
@@ -62,6 +74,46 @@ export default function App() {
   // Study Tasks State
   const [tasks, setTasks] = useState<StudyTask[]>(INITIAL_STUDY_TASKS);
 
+  // Load data from Supabase on mount and sync whenever user changes
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCloudData() {
+      try {
+        // Fetch all available public + user resources from Supabase
+        const cloudResources = await fetchAllResourcesFromSupabase(currentUser);
+        if (isMounted && cloudResources.length > 0) {
+          setResources(cloudResources);
+        }
+
+        // Fetch user tasks & bookmarks if authenticated
+        if (currentUser) {
+          const [cloudTasks, cloudBookmarks] = await Promise.all([
+            fetchStudyTasksFromSupabase(currentUser),
+            fetchBookmarksFromSupabase(currentUser),
+          ]);
+
+          if (isMounted) {
+            if (cloudTasks.length > 0) {
+              setTasks(cloudTasks);
+            }
+            if (cloudBookmarks.length > 0) {
+              setBookmarks(cloudBookmarks);
+              saveBookmarks(cloudBookmarks);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase initial data fetch warning:', err);
+      }
+    }
+
+    loadCloudData();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser]);
+
   // Calculate theme tokens based on continuous grayscale value
   const theme = getThemeTokens(sliderValue);
 
@@ -71,11 +123,21 @@ export default function App() {
     saveThemeValue(newValue);
   };
 
-  // Toggle bookmark with state persistence
+  // Toggle bookmark with state persistence and Supabase sync
   const handleToggleBookmark = (id: string) => {
     setBookmarks((prev) => {
-      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+      const isBookmarked = prev.includes(id);
+      const next = isBookmarked ? prev.filter((item) => item !== id) : [...prev, id];
       saveBookmarks(next);
+
+      // Persist to Supabase if logged in
+      if (currentUser) {
+        if (isBookmarked) {
+          removeBookmarkFromSupabase(currentUser, id).catch(() => {});
+        } else {
+          saveBookmarkToSupabase(currentUser, id).catch(() => {});
+        }
+      }
       return next;
     });
   };
@@ -121,6 +183,11 @@ export default function App() {
     // Also automatically bookmark for user
     handleToggleBookmark(newResource.id);
 
+    // Save into Supabase user_resources table
+    insertResourceToSupabase(newResource, currentUser).catch((err) =>
+      console.warn('Supabase save error:', err)
+    );
+
     // Auto-index into server-side RAG Knowledge Base
     try {
       await fetch('/api/rag/index-resource', {
@@ -137,6 +204,11 @@ export default function App() {
     setResources((prev) => prev.filter((r) => r.id !== id));
     setBookmarks((prev) => prev.filter((b) => b !== id));
 
+    // Delete from Supabase user_resources
+    deleteResourceFromSupabase(id).catch((err) =>
+      console.warn('Supabase delete error:', err)
+    );
+
     // Remove from server-side RAG Knowledge Base
     try {
       await fetch(`/api/rag/resource/${id}`, { method: 'DELETE' });
@@ -148,6 +220,11 @@ export default function App() {
   const handleUpdateResource = async (updatedResource: AcademicResource) => {
     setResources((prev) =>
       prev.map((r) => (r.id === updatedResource.id ? updatedResource : r))
+    );
+
+    // Update in Supabase user_resources
+    updateResourceInSupabase(updatedResource).catch((err) =>
+      console.warn('Supabase update error:', err)
     );
 
     // Re-index updated resource in server-side RAG
@@ -171,11 +248,25 @@ export default function App() {
 
   const handleAddTask = (newTask: StudyTask) => {
     setTasks((prev) => [newTask, ...prev]);
+    // Save to Supabase study_tasks table
+    insertStudyTaskToSupabase(newTask, currentUser).catch((err) =>
+      console.warn('Supabase task save error:', err)
+    );
   };
 
   const handleToggleTask = (id: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+      prev.map((t) => {
+        if (t.id === id) {
+          const updated = { ...t, completed: !t.completed };
+          // Update in Supabase study_tasks
+          updateStudyTaskInSupabase(updated).catch((err) =>
+            console.warn('Supabase task update error:', err)
+          );
+          return updated;
+        }
+        return t;
+      })
     );
   };
 
@@ -365,6 +456,7 @@ export default function App() {
             <FeedbackView
               theme={theme}
               onGoToHome={() => setCurrentTab('home')}
+              currentUser={currentUser}
             />
           )}
         </main>

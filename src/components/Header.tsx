@@ -15,6 +15,10 @@ import {
 import type { SidebarTab } from '../types/index.ts';
 import { ThemeColors } from '../utils/theme.ts';
 import { ProfileSettingsModal, UserProfileData, AVATAR_PRESETS } from './ProfileSettingsModal.tsx';
+import {
+  saveUserProfileToSupabase,
+  fetchUserProfileFromSupabase,
+} from '../utils/supabase.ts';
 
 interface HeaderProps {
   currentTab: SidebarTab;
@@ -116,15 +120,11 @@ export const Header: React.FC<HeaderProps> = ({
       // ignore
     }
 
-    const namePart = userEmail.split('@')[0].replace(/[._]/g, ' ');
-    const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    const cleanUsername = userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
-    setProfile((prev) => ({
-      ...prev,
-      fullName: prev.fullName || formattedName,
-      username: prev.username || cleanUsername,
-      email: userEmail,
-    }));
+    fetchUserProfileFromSupabase(userEmail).then((cloudProfile) => {
+      if (cloudProfile) {
+        setProfile(cloudProfile);
+      }
+    }).catch(() => {});
   }, [userEmail]);
 
   const handleSaveProfile = (updated: UserProfileData) => {
@@ -134,6 +134,8 @@ export const Header: React.FC<HeaderProps> = ({
     } catch {
       // ignore
     }
+    // Persist to Supabase cloud database
+    saveUserProfileToSupabase(updated).catch((err) => console.warn('Supabase profile save error:', err));
   };
 
   // Close brightness popover when clicking outside or pressing Escape
