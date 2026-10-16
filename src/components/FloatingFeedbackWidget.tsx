@@ -516,9 +516,15 @@ export const FloatingFeedbackWidget: React.FC<FloatingFeedbackWidgetProps> = ({
         {/* Feedback Icon matching AI button scale */}
         <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12">
           {isOpen ? (
-            <X className="w-6 h-6 text-purple-300" />
+            <X
+              className="w-6 h-6 transition-colors duration-200"
+              style={{ color: theme.isDark ? '#F7F5FC' : '#302747' }}
+            />
           ) : (
-            <MessageSquareQuote className="w-6 h-6 text-purple-300 dark:text-purple-200" />
+            <MessageSquareQuote
+              className="w-6 h-6 transition-colors duration-200"
+              style={{ color: theme.isDark ? '#F7F5FC' : '#302747' }}
+            />
           )}
         </div>
 

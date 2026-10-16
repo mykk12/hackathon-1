@@ -818,7 +818,7 @@ export const ManageView: React.FC<ManageViewProps> = ({
 
                 <div>
                   {/* 1. Type of file icon, name of file beside it */}
-                  <div className="flex items-start gap-3 mb-3.5">
+                  <div className="flex items-center gap-3 mb-3.5">
                     {/* Type of file icon */}
                     <div
                       className="w-11 h-11 rounded-2xl flex flex-col items-center justify-center font-black text-xs shadow-xs relative transition-transform duration-200 group-hover:scale-105 shrink-0"
@@ -836,27 +836,14 @@ export const ManageView: React.FC<ManageViewProps> = ({
                       </span>
                     </div>
 
-                    {/* Name of file beside it */}
+                    {/* Name of file beside it - clean file name only with increased size for clear reading */}
                     <div className="min-w-0 flex-1">
                       <div
-                        className="font-mono text-xs sm:text-sm font-extrabold truncate"
+                        className="text-base sm:text-[17px] font-extrabold tracking-tight truncate leading-snug"
                         style={{ color: theme.textPrimary }}
                         title={displayFileName}
                       >
                         {displayFileName}
-                      </div>
-                      <div className="text-[11px] font-semibold truncate opacity-75 mt-0.5" style={{ color: theme.textSecondary }}>
-                        {res.title}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span
-                          className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider border ${fileMeta.badgeBg} ${fileMeta.badgeText} ${fileMeta.badgeBorder}`}
-                        >
-                          {fileMeta.label}
-                        </span>
-                        <span className="text-[10px] font-medium opacity-65 truncate" style={{ color: theme.textMuted }}>
-                          · {res.subject}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -883,92 +870,87 @@ export const ManageView: React.FC<ManageViewProps> = ({
                     </div>
                   </div>
 
-                  {/* 3. Visibility: only public / private only, when clicked option to choose one public or private */}
-                  <div className="mb-3.5 relative privacy-menu-container">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPrivacyMenuId(privacyMenuId === res.id ? null : res.id);
-                      }}
-                      title="Click to choose Public or Private"
-                      className="inline-flex items-center gap-2 text-[11px] font-black px-3 py-1.5 rounded-xl cursor-pointer transition-all hover:scale-102 active:scale-98 shadow-2xs border"
+                  {/* 3. Visibility: Two visible options (Private and Public) that react as specified */}
+                  <div className="mb-3.5">
+                    <div
+                      className="inline-flex items-center p-0.5 rounded-xl border backdrop-blur-sm shadow-2xs transition-all"
                       style={{
-                        backgroundColor: res.isPublic ? 'rgba(168, 85, 247, 0.12)' : 'rgba(16, 185, 129, 0.12)',
-                        color: res.isPublic ? (theme.isDark ? '#D8B4FE' : '#6B21A8') : (theme.isDark ? '#6EE7B7' : '#065F46'),
-                        borderColor: res.isPublic ? 'rgba(168, 85, 247, 0.35)' : 'rgba(16, 185, 129, 0.35)',
+                        backgroundColor: theme.isDark ? 'rgba(20, 16, 30, 0.65)' : 'rgba(48, 39, 71, 0.05)',
+                        borderColor: theme.surfaceBorder,
                       }}
+                      role="group"
+                      aria-label="Visibility options"
                     >
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          res.isPublic ? 'bg-purple-500 animate-pulse' : 'bg-emerald-500'
-                        }`}
-                      />
-                      {res.isPublic ? (
-                        <>
-                          <Globe className="w-3.5 h-3.5" />
-                          <span>Public only</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-3.5 h-3.5" />
-                          <span>Private only</span>
-                        </>
-                      )}
-                      <ChevronDown className="w-3 h-3 opacity-60 ml-0.5" />
-                    </button>
-
-                    {/* Option to choose one: public or private */}
-                    {privacyMenuId === res.id && (
-                      <div
-                        className="absolute left-0 top-full mt-1.5 w-52 rounded-2xl p-1.5 shadow-2xl border z-50 backdrop-blur-2xl animate-in fade-in zoom-in-95"
-                        style={{
-                          backgroundColor: theme.isDark ? '#221B32' : '#FFFFFF',
-                          borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(48, 39, 71, 0.18)',
-                          boxShadow: '0 12px 32px -4px rgba(0,0,0,0.35)',
+                      {/* Private Option */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (res.isPublic) {
+                            handleSetPrivacy(res, false);
+                          }
                         }}
-                        onClick={(e) => e.stopPropagation()}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                          !res.isPublic
+                            ? 'shadow-xs scale-102 font-extrabold'
+                            : 'opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 font-semibold'
+                        }`}
+                        style={{
+                          backgroundColor: !res.isPublic
+                            ? (theme.isDark ? 'rgba(16, 185, 129, 0.22)' : '#ECFDF5')
+                            : 'transparent',
+                          color: !res.isPublic
+                            ? (theme.isDark ? '#6EE7B7' : '#047857')
+                            : theme.textSecondary,
+                          border: !res.isPublic
+                            ? (theme.isDark ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(16, 185, 129, 0.35)')
+                            : '1px solid transparent',
+                        }}
+                        title="Set to Private only (visible only to you)"
+                        aria-pressed={!res.isPublic}
                       >
-                        <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider opacity-60" style={{ color: theme.textMuted }}>
-                          Set Visibility
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleSetPrivacy(res, true)}
-                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            res.isPublic ? 'bg-purple-500/20 text-purple-600 dark:text-purple-300' : 'hover:bg-purple-500/10 text-left'
-                          }`}
-                          style={{ color: res.isPublic ? undefined : theme.textPrimary }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-purple-500 shrink-0" />
-                            <div className="text-left">
-                              <div className="font-extrabold text-xs">Public only</div>
-                              <div className="text-[10px] opacity-70 font-normal">Visible to peers & community</div>
-                            </div>
-                          </div>
-                          {res.isPublic && <Check className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />}
-                        </button>
+                        <Lock className={`w-3.5 h-3.5 ${!res.isPublic ? 'text-emerald-500' : ''}`} />
+                        <span>Private</span>
+                        {!res.isPublic && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-0.5" />
+                        )}
+                      </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleSetPrivacy(res, false)}
-                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer mt-0.5 ${
-                            !res.isPublic ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'hover:bg-emerald-500/10 text-left'
-                          }`}
-                          style={{ color: !res.isPublic ? undefined : theme.textPrimary }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-                            <div className="text-left">
-                              <div className="font-extrabold text-xs">Private only</div>
-                              <div className="text-[10px] opacity-70 font-normal">Only visible to your account</div>
-                            </div>
-                          </div>
-                          {!res.isPublic && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />}
-                        </button>
-                      </div>
-                    )}
+                      {/* Public Option */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!res.isPublic) {
+                            handleSetPrivacy(res, true);
+                          }
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                          res.isPublic
+                            ? 'shadow-xs scale-102 font-extrabold'
+                            : 'opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 font-semibold'
+                        }`}
+                        style={{
+                          backgroundColor: res.isPublic
+                            ? (theme.isDark ? 'rgba(168, 85, 247, 0.22)' : '#F3E8FF')
+                            : 'transparent',
+                          color: res.isPublic
+                            ? (theme.isDark ? '#D8B4FE' : '#6B21A8')
+                            : theme.textSecondary,
+                          border: res.isPublic
+                            ? (theme.isDark ? '1px solid rgba(168, 85, 247, 0.45)' : '1px solid rgba(168, 85, 247, 0.35)')
+                            : '1px solid transparent',
+                        }}
+                        title="Set to Public only (visible to peers & community)"
+                        aria-pressed={res.isPublic}
+                      >
+                        <Globe className={`w-3.5 h-3.5 ${res.isPublic ? 'text-purple-500' : ''}`} />
+                        <span>Public</span>
+                        {res.isPublic && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse ml-0.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1101,7 +1083,7 @@ export const ManageView: React.FC<ManageViewProps> = ({
             <div className="w-32 text-left">Subject</div>
             <div className="w-24 text-left">Size / Pgs</div>
             <div className="w-28 text-left">Date</div>
-            <div className="w-28 text-left">Visibility</div>
+            <div className="w-36 text-left">Visibility</div>
             <div className="w-28 text-right pr-2">Actions</div>
           </div>
 
@@ -1137,13 +1119,12 @@ export const ManageView: React.FC<ManageViewProps> = ({
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 font-mono text-xs font-bold truncate" style={{ color: theme.textPrimary }}>
-                      <span className="truncate" title={displayFileName}>
-                        {displayFileName}
-                      </span>
-                    </div>
-                    <div className="text-[11px] line-clamp-1 opacity-80" style={{ color: theme.textSecondary }}>
-                      {res.title}
+                    <div
+                      className="text-sm sm:text-base font-extrabold tracking-tight truncate leading-snug"
+                      style={{ color: theme.textPrimary }}
+                      title={displayFileName}
+                    >
+                      {displayFileName}
                     </div>
                   </div>
                 </div>
@@ -1174,67 +1155,78 @@ export const ManageView: React.FC<ManageViewProps> = ({
                   </span>
                 </div>
 
-                {/* 5. Visibility Column (Interactive selector) */}
-                <div className="w-full md:w-28 flex items-center justify-between md:justify-start relative privacy-menu-container">
+                {/* 5. Visibility Column (Two visible options: Private and Public) */}
+                <div className="w-full md:w-36 flex items-center justify-between md:justify-start">
                   <span className="md:hidden text-[10px] font-bold" style={{ color: theme.textMuted }}>Visibility:</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPrivacyMenuId(privacyMenuId === `list-${res.id}` ? null : `list-${res.id}`);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black cursor-pointer hover:scale-102 transition-transform border"
+                  <div
+                    className="inline-flex items-center p-0.5 rounded-xl border backdrop-blur-sm"
                     style={{
-                      backgroundColor: res.isPublic ? 'rgba(168, 85, 247, 0.12)' : 'rgba(16, 185, 129, 0.12)',
-                      color: res.isPublic ? (theme.isDark ? '#D8B4FE' : '#6B21A8') : (theme.isDark ? '#6EE7B7' : '#065F46'),
-                      borderColor: res.isPublic ? 'rgba(168, 85, 247, 0.3)' : 'rgba(16, 185, 129, 0.3)',
+                      backgroundColor: theme.isDark ? 'rgba(20, 16, 30, 0.65)' : 'rgba(48, 39, 71, 0.05)',
+                      borderColor: theme.surfaceBorder,
                     }}
-                    title="Click to choose Public or Private"
+                    role="group"
+                    aria-label="Visibility options"
                   >
-                    {res.isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                    <span>{res.isPublic ? 'Public only' : 'Private only'}</span>
-                    <ChevronDown className="w-2.5 h-2.5 opacity-60" />
-                  </button>
-
-                  {/* Option to choose one: public or private */}
-                  {privacyMenuId === `list-${res.id}` && (
-                    <div
-                      className="absolute left-0 md:left-auto md:right-0 top-full mt-1.5 w-48 rounded-2xl p-1.5 shadow-2xl border z-50 backdrop-blur-2xl animate-in fade-in zoom-in-95"
-                      style={{
-                        backgroundColor: theme.isDark ? '#221B32' : '#FFFFFF',
-                        borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(48, 39, 71, 0.18)',
-                        boxShadow: '0 12px 32px -4px rgba(0,0,0,0.35)',
+                    {/* Private Option */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (res.isPublic) handleSetPrivacy(res, false);
                       }}
-                      onClick={(e) => e.stopPropagation()}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black transition-all cursor-pointer ${
+                        !res.isPublic
+                          ? 'shadow-xs font-extrabold'
+                          : 'opacity-60 hover:opacity-100 font-semibold'
+                      }`}
+                      style={{
+                        backgroundColor: !res.isPublic
+                          ? (theme.isDark ? 'rgba(16, 185, 129, 0.22)' : '#ECFDF5')
+                          : 'transparent',
+                        color: !res.isPublic
+                          ? (theme.isDark ? '#6EE7B7' : '#047857')
+                          : theme.textSecondary,
+                        border: !res.isPublic
+                          ? (theme.isDark ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(16, 185, 129, 0.35)')
+                          : '1px solid transparent',
+                      }}
+                      title="Set to Private only"
+                      aria-pressed={!res.isPublic}
                     >
-                      <button
-                        type="button"
-                        onClick={() => handleSetPrivacy(res, true)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          res.isPublic ? 'bg-purple-500/20 text-purple-600 dark:text-purple-300' : 'hover:bg-purple-500/10 text-left'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Globe className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                          <span>Public only</span>
-                        </div>
-                        {res.isPublic && <Check className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSetPrivacy(res, false)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer mt-0.5 ${
-                          !res.isPublic ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'hover:bg-emerald-500/10 text-left'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Lock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          <span>Private only</span>
-                        </div>
-                        {!res.isPublic && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                      </button>
-                    </div>
-                  )}
+                      <Lock className={`w-3 h-3 ${!res.isPublic ? 'text-emerald-500' : ''}`} />
+                      <span>Private</span>
+                    </button>
+
+                    {/* Public Option */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!res.isPublic) handleSetPrivacy(res, true);
+                      }}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black transition-all cursor-pointer ${
+                        res.isPublic
+                          ? 'shadow-xs font-extrabold'
+                          : 'opacity-60 hover:opacity-100 font-semibold'
+                      }`}
+                      style={{
+                        backgroundColor: res.isPublic
+                          ? (theme.isDark ? 'rgba(168, 85, 247, 0.22)' : '#F3E8FF')
+                          : 'transparent',
+                        color: res.isPublic
+                          ? (theme.isDark ? '#D8B4FE' : '#6B21A8')
+                          : theme.textSecondary,
+                        border: res.isPublic
+                          ? (theme.isDark ? '1px solid rgba(168, 85, 247, 0.45)' : '1px solid rgba(168, 85, 247, 0.35)')
+                          : '1px solid transparent',
+                      }}
+                      title="Set to Public only"
+                      aria-pressed={res.isPublic}
+                    >
+                      <Globe className={`w-3 h-3 ${res.isPublic ? 'text-purple-500' : ''}`} />
+                      <span>Public</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* 6. Action Controls & Three-Dot Dropdown Menu */}

@@ -427,6 +427,7 @@ export default function App() {
         isBookmarked={selectedResource ? bookmarks.includes(selectedResource.id) : false}
         onToggleBookmark={handleToggleBookmark}
         theme={theme}
+        currentUser={currentUser}
       />
 
       {/* Share / Upload Resource Modal */}

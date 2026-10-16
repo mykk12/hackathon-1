@@ -10,9 +10,11 @@ import {
   CalendarClock,
   LogOut,
   User,
+  Settings,
 } from 'lucide-react';
 import type { SidebarTab } from '../types/index.ts';
 import { ThemeColors } from '../utils/theme.ts';
+import { ProfileSettingsModal, UserProfileData, AVATAR_PRESETS } from './ProfileSettingsModal.tsx';
 
 interface HeaderProps {
   currentTab: SidebarTab;
@@ -57,8 +59,70 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const brightnessBtnRef = useRef<HTMLButtonElement>(null);
+
+  // User Profile state with local persistence
+  const [profile, setProfile] = useState<UserProfileData>(() => {
+    const defaultEmail = userEmail || 'mayank.bamil012@gmail.com';
+    const namePart = defaultEmail.split('@')[0].replace(/[._]/g, ' ');
+    const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    const cleanUsername = defaultEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+
+    try {
+      const saved = localStorage.getItem(`studyspace_profile_${defaultEmail}`);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // ignore
+    }
+
+    return {
+      fullName: formattedName || 'Mayank Bamil',
+      username: cleanUsername || 'mayank_bamil',
+      avatarUrl: AVATAR_PRESETS[0],
+      bio: 'Computer Science sophomore · Preparing for midterms',
+      institution: 'Tech Institute',
+      major: 'Computer Science',
+      academicYear: '2nd Year',
+      email: defaultEmail,
+      phone: '+1 (555) 234-5678',
+    };
+  });
+
+  useEffect(() => {
+    if (!userEmail) return;
+    try {
+      const saved = localStorage.getItem(`studyspace_profile_${userEmail}`);
+      if (saved) {
+        setProfile(JSON.parse(saved));
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
+    const namePart = userEmail.split('@')[0].replace(/[._]/g, ' ');
+    const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    const cleanUsername = userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+    setProfile((prev) => ({
+      ...prev,
+      fullName: prev.fullName || formattedName,
+      username: prev.username || cleanUsername,
+      email: userEmail,
+    }));
+  }, [userEmail]);
+
+  const handleSaveProfile = (updated: UserProfileData) => {
+    setProfile(updated);
+    try {
+      localStorage.setItem(`studyspace_profile_${userEmail || updated.email}`, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  };
 
   // Close brightness popover when clicking outside or pressing Escape
   useEffect(() => {
@@ -253,29 +317,106 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* User Session Info or Login / Register Buttons */}
+            {/* User Session Info (Profile Picture Type with Hover Username & Profile Settings) or Login / Register */}
             {userEmail ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                {/* Profile Picture Type Trigger - Shows Username on Hover & Opens Profile Settings on Click */}
                 <span
-                  className="hidden lg:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl truncate max-w-[200px]"
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    color: '#FFFFFF',
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setIsProfileModalOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIsProfileModalOpen(true);
+                    }
                   }}
-                  title={userEmail}
+                  className="group relative inline-flex items-center cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DCD1FA] rounded-full"
+                  aria-label={`Profile settings for @${profile.username || userEmail.split('@')[0]}`}
+                  title={`@${profile.username || userEmail.split('@')[0]} - Click to edit profile`}
                 >
-                  <User className="w-3.5 h-3.5 text-purple-200 shrink-0" />
-                  <span className="truncate">{userEmail}</span>
+                  {/* Circular Profile Picture / Avatar */}
+                  <div className="relative">
+                    <div
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-[#DCD1FA] shadow-md flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:border-white group-hover:shadow-[0_0_12px_rgba(220,209,250,0.5)]"
+                      style={{
+                        backgroundColor: '#241D35',
+                      }}
+                    >
+                      {profile.avatarUrl ? (
+                        <img
+                          src={profile.avatarUrl}
+                          alt={profile.fullName || profile.username}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="font-extrabold text-sm sm:text-base text-[#DCD1FA]">
+                          {(profile.fullName || profile.username || userEmail).charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Small Profile Settings Indicator Badge */}
+                    <div
+                      className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center shadow-xs transition-transform duration-200 group-hover:scale-110"
+                      style={{
+                        backgroundColor: '#DCD1FA',
+                        color: '#302747',
+                        border: '1.5px solid #302747',
+                      }}
+                      title="Edit Profile Settings"
+                    >
+                      <Settings className="w-2.5 h-2.5" />
+                    </div>
+                  </div>
+
+                  {/* Username Displayed on Hover */}
+                  <div
+                    className="absolute top-full mt-2.5 right-0 sm:left-1/2 sm:-translate-x-1/2 pointer-events-none opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50 flex flex-col items-end sm:items-center"
+                    style={{ filter: 'drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45))' }}
+                  >
+                    {/* Tooltip Arrow */}
+                    <div
+                      className="w-2.5 h-2.5 rotate-45 -mb-1 shadow-xs hidden sm:block"
+                      style={{
+                        backgroundColor: '#1E172E',
+                        borderTop: '1px solid rgba(220, 209, 250, 0.3)',
+                        borderLeft: '1px solid rgba(220, 209, 250, 0.3)',
+                      }}
+                    />
+                    {/* Tooltip Bubble */}
+                    <div
+                      className="px-3.5 py-2 rounded-2xl border text-white whitespace-nowrap flex flex-col items-start sm:items-center gap-0.5"
+                      style={{
+                        backgroundColor: '#1E172E',
+                        borderColor: 'rgba(220, 209, 250, 0.3)',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.55)',
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#DCD1FA] font-mono font-bold text-xs">@</span>
+                        <span className="font-mono text-xs font-bold text-white tracking-tight">
+                          {profile.username || userEmail.split('@')[0]}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-medium text-purple-200/80 flex items-center gap-1">
+                        <Settings className="w-2.5 h-2.5 text-purple-300" />
+                        <span>Profile edit settings</span>
+                      </span>
+                    </div>
+                  </div>
                 </span>
+
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-xl transition-all border cursor-pointer hover:opacity-85 active:scale-95"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl transition-all border cursor-pointer hover:opacity-85 active:scale-95"
                   style={{
                     backgroundColor: 'transparent',
                     borderColor: 'rgba(220, 209, 250, 0.3)',
                     color: '#DCD1FA',
                   }}
+                  title="Sign out of your account"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Sign out</span>
@@ -407,20 +548,45 @@ export const Header: React.FC<HeaderProps> = ({
               </nav>
             </div>
 
-            {/* Mobile Footer with User info */}
+            {/* Mobile Footer with User info & Profile Settings Trigger */}
             <div className="pt-4 border-t border-white/10">
               {userEmail ? (
-                <div className="space-y-2">
-                  <div className="text-xs text-white/70 truncate">
-                    Logged in as: <strong className="text-white">{userEmail}</strong>
-                  </div>
+                <div className="space-y-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setIsProfileModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 transition-all text-left cursor-pointer border border-white/10 group"
+                  >
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#DCD1FA] shrink-0 bg-[#241D35] flex items-center justify-center">
+                      {profile.avatarUrl ? (
+                        <img src={profile.avatarUrl} alt={profile.fullName || profile.username} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-bold text-sm text-[#DCD1FA]">
+                          {(profile.fullName || profile.username || userEmail).charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-white truncate flex items-center gap-1">
+                        <span>@{profile.username || userEmail.split('@')[0]}</span>
+                      </div>
+                      <div className="text-[11px] text-purple-200/80 truncate flex items-center gap-1 mt-0.5">
+                        <Settings className="w-3 h-3 text-purple-300" />
+                        <span>Edit Profile Settings</span>
+                      </div>
+                    </div>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
                       onLogout?.();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs border border-purple-300/30 text-[#DCD1FA] hover:bg-white/5"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs border border-purple-300/30 text-[#DCD1FA] hover:bg-white/5 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign out</span>
@@ -453,6 +619,18 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
         </>
+      )}
+
+      {/* Student Profile Settings Modal */}
+      {userEmail && (
+        <ProfileSettingsModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          userEmail={userEmail}
+          onSaveProfile={handleSaveProfile}
+          currentProfile={profile}
+          theme={theme}
+        />
       )}
     </>
   );
