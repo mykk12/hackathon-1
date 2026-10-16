@@ -16,6 +16,7 @@ import { ManageView } from './components/ManageView.tsx';
 import { StudyPlanView } from './components/StudyPlanView.tsx';
 import { FeedbackView } from './components/FeedbackView.tsx';
 import { FloatingFeedbackWidget } from './components/FloatingFeedbackWidget.tsx';
+import { FloatingAIAssistant } from './components/FloatingAIAssistant.tsx';
 
 import type { SidebarTab, SubjectType, AcademicResource, StudyTask, UserRegistrationData } from './types/index.ts';
 import {
@@ -398,6 +399,17 @@ export default function App() {
         onClose={() => setIsShareModalOpen(false)}
         onAddResource={handleAddResource}
         theme={theme}
+      />
+
+      {/* Floating AI Study Space Assistant - Positioned directly above Feedback button */}
+      <FloatingAIAssistant
+        theme={theme}
+        currentTab={currentTab}
+        currentUser={currentUser}
+        savedCount={bookmarks.length}
+        tasksCount={tasks.length}
+        onNavigate={handleSelectTab}
+        onScrollToPopular={handleScrollToPopular}
       />
 
       {/* Floating Bottom-Right Feedback Widget */}

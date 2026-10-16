@@ -17,6 +17,7 @@ import {
   Check,
   X,
   Sparkles,
+  MoreVertical,
 } from 'lucide-react';
 import type { StudyTask, SubjectType } from '../types/index.ts';
 import { ThemeColors } from '../utils/theme.ts';
@@ -67,6 +68,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   const [presets, setPresets] = useState<TimerPreset[]>(INITIAL_PRESETS);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [editPresetMinutes, setEditPresetMinutes] = useState<number>(15);
+  const [openPresetMenuId, setOpenPresetMenuId] = useState<string | null>(null);
 
   // Custom preset creation
   const [isAddingCustomPreset, setIsAddingCustomPreset] = useState(false);
@@ -80,6 +82,20 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   const [newDueDate, setNewDueDate] = useState('2026-10-21');
   const [newDueTime, setNewDueTime] = useState('4:00 PM');
   const [isAdding, setIsAdding] = useState(true);
+
+  // Outside click listener for presets dropdown menu
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.preset-menu-container')) {
+        setOpenPresetMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
 
   // Timer interval effect
   useEffect(() => {
@@ -104,12 +120,49 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     };
   }, [isRunning, timerDirection]);
 
+  // Places any edited or random timer after pinned, and if none pinned then at start, keeping single identity
+  const registerTimerToPresets = (seconds: number) => {
+    if (seconds <= 0) return;
+    const mins = Math.max(1, Math.round(seconds / 60));
+
+    setPresets((prev) => {
+      const existing = prev.find((p) => p.minutes === mins);
+      let targetPreset: TimerPreset;
+      let listWithoutTarget: TimerPreset[];
+
+      if (existing) {
+        targetPreset = existing;
+        // If already pinned, it remains pinned in its current position
+        if (targetPreset.isPinned) {
+          return prev;
+        }
+        listWithoutTarget = prev.filter((p) => p.id !== existing.id);
+      } else {
+        targetPreset = {
+          id: `preset-${mins}-${Date.now()}`,
+          minutes: mins,
+          label: `${mins} mins`,
+          isPinned: false,
+        };
+        listWithoutTarget = prev;
+      }
+
+      // If any edited or random timer is started, placed after pinned; if not pinned then at start
+      const pinned = listWithoutTarget.filter((p) => p.isPinned);
+      const unpinned = listWithoutTarget.filter((p) => !p.isPinned);
+
+      return [...pinned, targetPreset, ...unpinned];
+    });
+  };
+
   const handleStartPause = () => {
     if (!isRunning) {
       if (timerSeconds === 0) {
         setTimerDirection('up');
       } else {
         setTimerDirection('down');
+        // When any timer is started, register it so it is placed after pinned (or at start if none pinned)
+        registerTimerToPresets(timerSeconds);
       }
       setIsRunning(true);
     } else {
@@ -151,57 +204,68 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     setIsRunning(false);
     setIsEditingTimer(false);
     setSelectedPresetId(null);
+    if (total > 0) {
+      registerTimerToPresets(total);
+    }
   };
 
-  // Pin preset: if pinned add another not available default option after the pinned ones
+  // Pin/Unpin: Remains the only identity of that timing (no duplicate added)
   const handleTogglePin = (id: string) => {
     setPresets((prev) => {
       const target = prev.find((p) => p.id === id);
       if (!target) return prev;
 
       const willBePinned = !target.isPinned;
-      let updated = prev.map((p) => (p.id === id ? { ...p, isPinned: willBePinned } : p));
-
-      if (willBePinned) {
-        const existingMinutes = new Set(updated.map((p) => p.minutes));
-        const nextMinute = RESERVE_PRESET_MINUTES.find((m) => !existingMinutes.has(m));
-        if (nextMinute) {
-          const newPreset: TimerPreset = {
-            id: `preset-${nextMinute}-${Date.now()}`,
-            minutes: nextMinute,
-            label: `${nextMinute} mins`,
-            isPinned: false,
-          };
-          const pinned = updated.filter((p) => p.isPinned);
-          const unpinned = updated.filter((p) => !p.isPinned);
-          return [...pinned, newPreset, ...unpinned];
-        }
-      }
+      const updated = prev.map((p) =>
+        p.id === id ? { ...p, isPinned: willBePinned } : p
+      );
 
       const pinned = updated.filter((p) => p.isPinned);
       const unpinned = updated.filter((p) => !p.isPinned);
       return [...pinned, ...unpinned];
     });
+    setOpenPresetMenuId(null);
   };
 
   const handleStartEditPreset = (preset: TimerPreset) => {
     setEditingPresetId(preset.id);
     setEditPresetMinutes(preset.minutes);
+    setOpenPresetMenuId(null);
   };
 
   const handleSavePresetEdit = (id: string) => {
     if (editPresetMinutes <= 0) return;
-    setPresets((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              minutes: editPresetMinutes,
-              label: `${editPresetMinutes} mins`,
-            }
-          : p
-      )
-    );
+    setPresets((prev) => {
+      // Ensure single identity: remove any conflicting preset with the same minutes
+      const existingOther = prev.find((p) => p.id !== id && p.minutes === editPresetMinutes);
+      let updated: TimerPreset[];
+      if (existingOther) {
+        updated = prev
+          .filter((p) => p.id !== existingOther.id)
+          .map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  minutes: editPresetMinutes,
+                  label: `${editPresetMinutes} mins`,
+                }
+              : p
+          );
+      } else {
+        updated = prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                minutes: editPresetMinutes,
+                label: `${editPresetMinutes} mins`,
+              }
+            : p
+        );
+      }
+      const pinned = updated.filter((p) => p.isPinned);
+      const unpinned = updated.filter((p) => !p.isPinned);
+      return [...pinned, ...unpinned];
+    });
     if (selectedPresetId === id) {
       setTimerSeconds(editPresetMinutes * 60);
     }
@@ -213,6 +277,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     if (selectedPresetId === id) {
       setSelectedPresetId(null);
     }
+    setOpenPresetMenuId(null);
   };
 
   const handleAddCustomPreset = () => {
@@ -388,39 +453,39 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                   return (
                     <div
                       key={preset.id}
-                      className="p-2 rounded-2xl border flex flex-col gap-1.5 shadow-sm"
+                      className="p-1 rounded-xl border flex items-center justify-between gap-1 shadow-sm"
                       style={{
                         backgroundColor: theme.isDark ? '#2D2540' : '#F4F2FB',
                         borderColor: '#8E74DB',
                       }}
                     >
-                      <div className="text-[10px] font-black uppercase text-purple-500">Edit Mins</div>
                       <input
                         type="number"
                         min="1"
                         max="360"
                         value={editPresetMinutes}
                         onChange={(e) => setEditPresetMinutes(parseInt(e.target.value, 10) || 1)}
-                        className="w-full text-xs font-mono font-bold px-1.5 py-1 rounded-lg border text-center"
+                        className="w-12 text-xs font-mono font-bold px-1 py-0.5 rounded border text-center"
                         style={{ backgroundColor: theme.cardBg, color: theme.textPrimary }}
                         autoFocus
                       />
-                      <div className="flex items-center gap-1 justify-center">
+                      <span className="text-[10px] font-medium opacity-60">m</span>
+                      <div className="flex items-center gap-0.5">
                         <button
                           type="button"
                           onClick={() => handleSavePresetEdit(preset.id)}
-                          className="p-1 rounded-lg bg-emerald-600 text-white cursor-pointer hover:bg-emerald-700"
+                          className="p-1 rounded bg-emerald-600 text-white cursor-pointer hover:bg-emerald-700"
                           title="Save"
                         >
-                          <Check className="w-3.5 h-3.5" />
+                          <Check className="w-3 h-3" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingPresetId(null)}
-                          className="p-1 rounded-lg bg-gray-500 text-white cursor-pointer hover:bg-gray-600"
+                          className="p-1 rounded bg-gray-500 text-white cursor-pointer hover:bg-gray-600"
                           title="Cancel"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
@@ -430,19 +495,19 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 return (
                   <div
                     key={preset.id}
-                    className={`relative p-2.5 rounded-2xl border transition-all flex flex-col justify-between ${
+                    className={`relative px-2.5 py-1.5 rounded-xl border transition-all flex items-center justify-between gap-1.5 ${
                       isSelected
-                        ? 'ring-2 ring-purple-500 shadow-md scale-102'
-                        : 'hover:border-purple-400/50 hover:shadow-xs'
+                        ? 'ring-1.5 ring-purple-500 shadow-sm'
+                        : 'hover:border-purple-400/40'
                     }`}
                     style={{
                       backgroundColor: isSelected
                         ? theme.isDark
                           ? '#2E2644'
-                          : '#DCD1FA'
+                          : '#EDE7FB'
                         : theme.isDark
                         ? 'rgba(255, 255, 255, 0.04)'
-                        : 'rgba(48, 39, 71, 0.04)',
+                        : 'rgba(48, 39, 71, 0.03)',
                       borderColor: preset.isPinned
                         ? '#F59E0B'
                         : isSelected
@@ -450,112 +515,132 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                         : theme.surfaceBorder,
                     }}
                   >
-                    {/* Pinned indicator badge */}
-                    {preset.isPinned && (
-                      <div
-                        className="absolute -top-2 left-2 px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-xs"
-                        style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
-                      >
-                        <Pin className="w-2.5 h-2.5 fill-current" />
-                        <span>Pinned</span>
-                      </div>
-                    )}
-
-                    {/* Preset click button to load time */}
+                    {/* Clickable Preset Timing to load time */}
                     <button
                       type="button"
                       onClick={() => handleSelectPreset(preset)}
-                      className="w-full text-left cursor-pointer pt-0.5"
+                      className="flex items-center gap-1.5 min-w-0 flex-1 text-left cursor-pointer group/title"
+                      title={`Set timer to ${preset.label}`}
                     >
-                      <div
-                        className="font-black text-sm tracking-tight"
-                        style={{ color: isSelected ? (theme.isDark ? '#FFFFFF' : '#302747') : theme.textPrimary }}
+                      {preset.isPinned && (
+                        <Pin className="w-3 h-3 text-amber-500 fill-current shrink-0" />
+                      )}
+                      <span
+                        className="font-extrabold text-xs sm:text-sm tracking-tight truncate group-hover/title:text-purple-500 transition-colors"
+                        style={{
+                          color: isSelected ? (theme.isDark ? '#FFFFFF' : '#2D234A') : theme.textPrimary,
+                        }}
                       >
                         {preset.label}
-                      </div>
-                      <div className="text-[10px] font-mono opacity-70" style={{ color: theme.textSecondary }}>
-                        {preset.minutes} min
-                      </div>
+                      </span>
                     </button>
 
-                    {/* Action Icons Row: Pin, Edit, Delete with Hover Tooltips */}
-                    <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-black/5 dark:border-white/10">
-                      {/* Pin icon with hover tooltip */}
-                      <div className="relative group/btn flex items-center justify-center">
+                    {/* Collapse Options in a Three Dot Icon */}
+                    <div className="relative preset-menu-container shrink-0">
+                      <div className="relative group/threeDot">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleTogglePin(preset.id);
+                            setOpenPresetMenuId(openPresetMenuId === preset.id ? null : preset.id);
                           }}
-                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                            preset.isPinned
-                              ? 'text-amber-500 hover:bg-amber-500/15'
-                              : 'text-gray-400 hover:text-amber-500 hover:bg-amber-500/10'
-                          }`}
-                          aria-label={preset.isPinned ? 'Unpin Preset' : 'Pin Preset'}
+                          className="p-1 rounded-lg text-gray-400 hover:text-purple-500 hover:bg-purple-500/10 transition-colors cursor-pointer"
+                          aria-label="Preset options"
                         >
-                          {preset.isPinned ? (
-                            <PinOff className="w-3.5 h-3.5" />
-                          ) : (
-                            <Pin className="w-3.5 h-3.5" />
-                          )}
+                          <MoreVertical className="w-3.5 h-3.5" />
                         </button>
+                        {/* Tooltip hovering over three dots */}
                         <div
                           role="tooltip"
-                          className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 scale-90 group-hover/btn:scale-100 transition-all duration-200 pointer-events-none px-2 py-0.5 rounded-lg text-[10px] font-black whitespace-nowrap shadow-xl z-30"
-                          style={{ backgroundColor: '#302747', color: '#FFF9F0' }}
+                          className="absolute -top-7 right-0 opacity-0 group-hover/threeDot:opacity-100 scale-90 group-hover/threeDot:scale-100 transition-all pointer-events-none px-2 py-0.5 rounded-md text-[9px] font-black whitespace-nowrap shadow-lg z-30"
+                          style={{ backgroundColor: '#201A2E', color: '#FFF9F0' }}
                         >
-                          {preset.isPinned ? 'Unpin Preset' : 'Pin Preset'}
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rotate-45 bg-[#302747]" />
+                          Options
                         </div>
                       </div>
 
-                      {/* Edit icon with hover tooltip */}
-                      <div className="relative group/btn flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStartEditPreset(preset);
-                          }}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors cursor-pointer"
-                          aria-label="Edit Preset"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
+                      {/* Collapsed Dropdown Menu */}
+                      {openPresetMenuId === preset.id && (
                         <div
-                          role="tooltip"
-                          className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 scale-90 group-hover/btn:scale-100 transition-all duration-200 pointer-events-none px-2 py-0.5 rounded-lg text-[10px] font-black whitespace-nowrap shadow-xl z-30"
-                          style={{ backgroundColor: '#302747', color: '#FFF9F0' }}
+                          className="absolute right-0 top-full mt-1.5 w-32 py-1 rounded-xl shadow-2xl border backdrop-blur-xl z-50 animate-in fade-in zoom-in-95"
+                          style={{
+                            backgroundColor: theme.isDark ? '#1C172B' : '#FFFFFF',
+                            borderColor: theme.surfaceBorder,
+                          }}
                         >
-                          Edit Preset
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rotate-45 bg-[#302747]" />
-                        </div>
-                      </div>
+                          {/* Pin / Unpin option */}
+                          <div className="relative group/pinItem">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTogglePin(preset.id);
+                              }}
+                              className="w-full px-2.5 py-1.5 text-left text-xs font-semibold flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
+                              style={{ color: preset.isPinned ? '#F59E0B' : theme.textPrimary }}
+                            >
+                              {preset.isPinned ? (
+                                <PinOff className="w-3.5 h-3.5 text-amber-500" />
+                              ) : (
+                                <Pin className="w-3.5 h-3.5 text-gray-400" />
+                              )}
+                              <span>{preset.isPinned ? 'Unpin' : 'Pin'}</span>
+                            </button>
+                            <div
+                              role="tooltip"
+                              className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 opacity-0 group-hover/pinItem:opacity-100 transition-opacity pointer-events-none px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap shadow-md z-50"
+                              style={{ backgroundColor: '#201A2E', color: '#FFFFFF' }}
+                            >
+                              {preset.isPinned ? 'Unpin Preset' : 'Pin Preset'}
+                            </div>
+                          </div>
 
-                      {/* Delete icon with hover tooltip */}
-                      <div className="relative group/btn flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePreset(preset.id);
-                          }}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                          aria-label="Delete Preset"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        <div
-                          role="tooltip"
-                          className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 scale-90 group-hover/btn:scale-100 transition-all duration-200 pointer-events-none px-2 py-0.5 rounded-lg text-[10px] font-black whitespace-nowrap shadow-xl z-30"
-                          style={{ backgroundColor: '#BE123C', color: '#FFFFFF' }}
-                        >
-                          Delete Preset
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rotate-45 bg-[#BE123C]" />
+                          {/* Edit option */}
+                          <div className="relative group/editItem">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEditPreset(preset);
+                              }}
+                              className="w-full px-2.5 py-1.5 text-left text-xs font-semibold flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
+                              style={{ color: theme.textPrimary }}
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                              <span>Edit</span>
+                            </button>
+                            <div
+                              role="tooltip"
+                              className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 opacity-0 group-hover/editItem:opacity-100 transition-opacity pointer-events-none px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap shadow-md z-50"
+                              style={{ backgroundColor: '#201A2E', color: '#FFFFFF' }}
+                            >
+                              Edit Preset
+                            </div>
+                          </div>
+
+                          {/* Delete option */}
+                          <div className="relative group/delItem">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePreset(preset.id);
+                              }}
+                              className="w-full px-2.5 py-1.5 text-left text-xs font-semibold flex items-center gap-2 text-rose-500 hover:bg-rose-500/10 cursor-pointer transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                              <span>Delete</span>
+                            </button>
+                            <div
+                              role="tooltip"
+                              className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 opacity-0 group-hover/delItem:opacity-100 transition-opacity pointer-events-none px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap shadow-md z-50"
+                              style={{ backgroundColor: '#BE123C', color: '#FFFFFF' }}
+                            >
+                              Delete Preset
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1079,7 +1164,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold mb-1" style={{ color: theme.textPrimary }}>
-                      Target Due Date (Syncs with Calendar)
+                      Target Due Date
                     </label>
                     <input
                       type="date"
@@ -1112,7 +1197,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                     Priority
                   </label>
 
-                  <div className="grid grid-cols-4 gap-2 mb-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {(['low', 'medium', 'high', 'max'] as const).map((p) => (
                       <button
                         key={p}
@@ -1136,18 +1221,6 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                       </button>
                     ))}
                   </div>
-
-                  <select
-                    value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value as 'low' | 'medium' | 'high' | 'max')}
-                    className="w-full px-3 py-2 rounded-xl text-xs border"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
-                  >
-                    <option value="low">low</option>
-                    <option value="medium">medium</option>
-                    <option value="high">high</option>
-                    <option value="max">max</option>
-                  </select>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: theme.surfaceBorder }}>
