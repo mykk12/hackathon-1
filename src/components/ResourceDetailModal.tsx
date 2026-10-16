@@ -40,38 +40,7 @@ interface ResourceDetailModalProps {
   currentUser?: string | null;
 }
 
-const DEFAULT_REVIEWS: ResourceReview[] = [
-  {
-    id: 'rev-seed-1',
-    name: 'Elena Rostova',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face&auto=format&q=80',
-    rating: 5,
-    comment: 'Super concise and well-structured! The visual diagrams and formulas directly mirrored the questions on our midterm exam.',
-    date: '3 days ago',
-    verified: true,
-    helpfulCount: 14,
-  },
-  {
-    id: 'rev-seed-2',
-    name: 'Marcus Chen',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face&auto=format&q=80',
-    rating: 5,
-    comment: 'Saved me hours of lecture note transcription. High signal-to-noise ratio, zero fluff, and great algorithmic proofs.',
-    date: '1 week ago',
-    verified: true,
-    helpfulCount: 9,
-  },
-  {
-    id: 'rev-seed-3',
-    name: 'Sophia Patel',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face&auto=format&q=80',
-    rating: 4,
-    comment: 'Very thorough explanations throughout. The core theorem breakdown and derivation steps helped our entire study group.',
-    date: '2 weeks ago',
-    verified: true,
-    helpfulCount: 6,
-  },
-];
+const DEFAULT_REVIEWS: ResourceReview[] = [];
 
 export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   resource,

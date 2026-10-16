@@ -31,6 +31,7 @@ import {
   saveBookmarks,
   filterAcademicResources,
 } from './utils/resources.ts';
+import { insertUserEntryToSupabase } from './utils/supabase.ts';
 
 export default function App() {
   // Theme & Grayscale Background Slider State
@@ -44,7 +45,7 @@ export default function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(() => {
-    return localStorage.getItem('study_user_email') ?? 'mayank.bamil012@gmail.com';
+    return localStorage.getItem('study_user_email') || null;
   });
 
   // Academic Resources & Bookmarks State
@@ -410,6 +411,7 @@ export default function App() {
         onRegisterSuccess={(data: UserRegistrationData) => {
           setCurrentUser(data.email);
           localStorage.setItem('study_user_email', data.email);
+          insertUserEntryToSupabase(data).catch(() => {});
           if (pendingTab) {
             setCurrentTab(pendingTab);
             setPendingTab(null);

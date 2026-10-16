@@ -88,24 +88,24 @@ interface FloatingAIAssistantProps {
 
 const STARTER_PROMPTS = [
   {
-    title: 'Midterm Algorithms',
-    prompt: 'What graph algorithms are in my Midterm Algorithms review, and what is the difference between Dijkstra and Bellman-Ford?',
-    icon: BookOpen,
-  },
-  {
-    title: 'Biochemistry Pathways',
-    prompt: 'What are the 10 steps of glycolysis and how is PFK-1 regulated according to my notes?',
-    icon: Clock,
-  },
-  {
     title: 'Study Schedule',
-    prompt: 'Can you create a 7-day revision schedule for my upcoming exams with 3 hours of study daily?',
+    prompt: 'Can you help me organize a 7-day revision schedule for my upcoming examinations?',
     icon: Calendar,
   },
   {
+    title: 'Study Techniques',
+    prompt: 'What are effective active recall and spaced repetition methods for exam prep?',
+    icon: BookOpen,
+  },
+  {
     title: 'Platform Guide',
-    prompt: 'How do I use the Study Plan Focus Timer, presets, and manage my uploaded notes on Study Space?',
+    prompt: 'How do I use the Focus Timer, presets, and manage my uploaded study decks?',
     icon: Compass,
+  },
+  {
+    title: 'Summarize Materials',
+    prompt: 'How can I search and review my uploaded study notes using this assistant?',
+    icon: Clock,
   },
 ];
 
@@ -149,48 +149,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
     } catch {
       // ignore
     }
-    return [
-      {
-        id: 'hist-seed-1',
-        title: 'Midterm Algorithms Review',
-        date: 'Today, 10:30 AM',
-        preview: 'Dijkstra min-heap complexity and negative edge weights failure analysis.',
-        messages: [
-          {
-            id: 'h1-u',
-            role: 'user',
-            content: 'What is the time complexity of Dijkstra algorithm with a Min-Heap?',
-            timestamp: '10:30 AM',
-          },
-          {
-            id: 'h1-a',
-            role: 'assistant',
-            content: 'According to your **Midterm Algorithms & Graph Review (Page 1)**, Dijkstra using a binary min-heap runs in **O((V + E) log V)** time.',
-            timestamp: '10:31 AM',
-          },
-        ],
-      },
-      {
-        id: 'hist-seed-2',
-        title: 'Biochemistry PFK-1 Regulation',
-        date: 'Yesterday, 3:15 PM',
-        preview: 'Allosteric regulation of Phosphofructokinase-1 by ATP, Citrate, and AMP.',
-        messages: [
-          {
-            id: 'h2-u',
-            role: 'user',
-            content: 'What are the allosteric effectors of PFK-1 in glycolysis?',
-            timestamp: '3:15 PM',
-          },
-          {
-            id: 'h2-a',
-            role: 'assistant',
-            content: 'From your **Biochemistry Reaction Pathways (Page 2)**: PFK-1 is allosterically inhibited by ATP and Citrate, and stimulated by AMP, ADP, and F-2,6-BP.',
-            timestamp: '3:16 PM',
-          },
-        ],
-      },
-    ];
+    return [];
   });
 
   // Fetch RAG stats
@@ -245,7 +204,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
         role: 'assistant',
         content: `👋 Hi ${
           currentUser ? currentUser.split('@')[0] : 'there'
-        }! I'm your **Study Space AI Academic Assistant**.\n\nI am connected to your **StudySpace Website Library & Uploaded Materials**.\n\n🔍 **What I can do with your real content:**\n- 📚 Answer exam questions using your uploaded notes, cheat sheets, and formula decks with exact page citations\n- ⚡ Explain Dijkstra, Bellman-Ford, Kruskals, Glycolysis, Calculus formulas, and SQL directly from your course files\n- 🔒 Keep your private notes strictly confidential with multi-user authorization\n- 📅 Build customized daily revision roadmaps based on your active study tasks\n\nAsk me anything about your courses or study materials!`,
+        }! I'm your **Study Space AI Academic Assistant**.\n\nI am connected to your **StudySpace Website Library & Uploaded Materials**.\n\n🔍 **What I can do with your materials:**\n- 📚 Answer questions using your uploaded study decks and notes with citations\n- ⚡ Break down complex exam topics, formulas, and concepts from your materials\n- 🔒 Keep your private notes strictly confidential with user authorization\n- 📅 Build customized daily revision roadmaps based on your active study tasks\n\nAsk me anything about your study goals or materials!`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ];

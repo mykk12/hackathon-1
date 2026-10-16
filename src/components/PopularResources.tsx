@@ -148,15 +148,19 @@ export const PopularResources: React.FC<PopularResourcesProps> = ({
               }}
             >
               <p className="text-sm font-semibold" style={{ color: theme.textSecondary }}>
-                No academic files found matching your current filter.
+                {searchQuery || activeFormatFilter !== 'All'
+                  ? 'No academic files found matching your current filter.'
+                  : 'No academic resources uploaded yet. Upload your notes or slide decks to get started!'}
               </p>
-              <button
-                onClick={onViewAllClick}
-                className="mt-3 px-4 py-2 rounded-xl text-xs font-bold shadow-xs cursor-pointer"
-                style={{ backgroundColor: '#DCD1FA', color: '#302747' }}
-              >
-                Reset Filters
-              </button>
+              {(searchQuery || activeFormatFilter !== 'All') && (
+                <button
+                  onClick={onViewAllClick}
+                  className="mt-3 px-4 py-2 rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                  style={{ backgroundColor: '#DCD1FA', color: '#302747' }}
+                >
+                  Reset Filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">

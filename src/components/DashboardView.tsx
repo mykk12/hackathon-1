@@ -71,10 +71,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Flame className="w-5 h-5 text-amber-500 fill-amber-500" />
           </div>
           <div className="text-2xl sm:text-3xl font-black" style={{ color: theme.textPrimary }}>
-            6 Days
+            {completedTasks > 0 ? '1 Day' : '0 Days'}
           </div>
           <div className="text-[11px] font-medium mt-1" style={{ color: theme.textMuted }}>
-            Consistent daily revision
+            {completedTasks > 0 ? 'Active revision streak' : 'Start a task to build streak'}
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {completedTasks} / {tasks.length}
           </div>
           <div className="text-[11px] font-medium mt-1" style={{ color: theme.textMuted }}>
-            Target completion rate {Math.round((completedTasks / tasks.length) * 100)}%
+            Target completion rate {tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0}%
           </div>
         </div>
 
@@ -128,7 +128,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Clock className="w-5 h-5 text-rose-500" />
           </div>
           <div className="text-2xl sm:text-3xl font-black" style={{ color: theme.textPrimary }}>
-            14.5 hrs
+            {completedTasks > 0 ? `${(completedTasks * 0.75).toFixed(1)} hrs` : '0.0 hrs'}
           </div>
           <div className="text-[11px] font-medium mt-1" style={{ color: theme.textMuted }}>
             Logged this week

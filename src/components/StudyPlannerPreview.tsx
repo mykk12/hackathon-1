@@ -27,7 +27,7 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
   };
 
   const completedCount = tasks.filter((t) => t.completed).length;
-  const progressPercent = Math.round((completedCount / tasks.length) * 100);
+  const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   const formatTimer = (totalSecs: number) => {
     const mins = Math.floor(totalSecs / 60);
@@ -92,7 +92,9 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
                 <div className="flex items-center justify-between text-xs font-bold mb-2">
                   <span style={{ color: theme.textPrimary }}>Today's Target Progress</span>
                   <span style={{ color: '#164E3A' }}>
-                    {completedCount} of {tasks.length} completed ({progressPercent}%)
+                    {tasks.length > 0
+                      ? `${completedCount} of ${tasks.length} completed (${progressPercent}%)`
+                      : 'No tasks scheduled yet'}
                   </span>
                 </div>
                 <div className="w-full h-2.5 rounded-full overflow-hidden bg-black/10 dark:bg-white/10">
@@ -160,7 +162,28 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
 
                 {/* Interactive Task Checklist */}
                 <div className="space-y-2.5">
-                  {tasks.map((task) => (
+                  {tasks.length === 0 ? (
+                    <div
+                      className="p-6 rounded-2xl text-center border border-dashed"
+                      style={{
+                        borderColor: theme.surfaceBorder,
+                        backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(48, 39, 71, 0.02)',
+                      }}
+                    >
+                      <p className="text-xs font-medium mb-3" style={{ color: theme.textMuted }}>
+                        No revision tasks scheduled yet.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={onOpenPlanner}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer hover:opacity-90 transition-all shadow-xs"
+                        style={{ backgroundColor: '#DCD1FA', color: '#302747' }}
+                      >
+                        + Create Your First Study Task
+                      </button>
+                    </div>
+                  ) : (
+                    tasks.map((task) => (
                     <div
                       key={task.id}
                       onClick={() => toggleTask(task.id)}
@@ -254,7 +277,8 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
                         </span>
                       </div>
                     </div>
-                  ))}
+                  ))
+                )}
                 </div>
 
                 <div className="mt-4 pt-3 border-t text-center" style={{ borderColor: theme.surfaceBorder }}>

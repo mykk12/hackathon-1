@@ -65,13 +65,25 @@ export const Header: React.FC<HeaderProps> = ({
 
   // User Profile state with local persistence
   const [profile, setProfile] = useState<UserProfileData>(() => {
-    const defaultEmail = userEmail || 'mayank.bamil012@gmail.com';
-    const namePart = defaultEmail.split('@')[0].replace(/[._]/g, ' ');
+    if (!userEmail) {
+      return {
+        fullName: '',
+        username: '',
+        avatarUrl: AVATAR_PRESETS[0],
+        bio: '',
+        institution: '',
+        major: '',
+        academicYear: '',
+        email: '',
+        phone: '',
+      };
+    }
+    const namePart = userEmail.split('@')[0].replace(/[._]/g, ' ');
     const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    const cleanUsername = defaultEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+    const cleanUsername = userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
 
     try {
-      const saved = localStorage.getItem(`studyspace_profile_${defaultEmail}`);
+      const saved = localStorage.getItem(`studyspace_profile_${userEmail}`);
       if (saved) {
         return JSON.parse(saved);
       }
@@ -80,15 +92,15 @@ export const Header: React.FC<HeaderProps> = ({
     }
 
     return {
-      fullName: formattedName || 'Mayank Bamil',
-      username: cleanUsername || 'mayank_bamil',
+      fullName: formattedName,
+      username: cleanUsername,
       avatarUrl: AVATAR_PRESETS[0],
-      bio: 'Computer Science sophomore · Preparing for midterms',
-      institution: 'Tech Institute',
-      major: 'Computer Science',
-      academicYear: '2nd Year',
-      email: defaultEmail,
-      phone: '+1 (555) 234-5678',
+      bio: '',
+      institution: '',
+      major: '',
+      academicYear: '',
+      email: userEmail,
+      phone: '',
     };
   });
 

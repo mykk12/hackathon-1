@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { AcademicResource, StudyTask } from '../types/index.ts';
+import type { AcademicResource, StudyTask, UserEntry, UserRegistrationData } from '../types/index.ts';
 
 // Client-side environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -171,5 +171,80 @@ export async function fetchAuthorizedStudyTasks(userId: string): Promise<{
   } catch (err: unknown) {
     const error = err as Error;
     return { data: null, error: error.message, connected: true };
+  }
+}
+
+/**
+ * Inserts a new user entry (registration, profile, or onboarding record) into Supabase
+ */
+export async function insertUserEntryToSupabase(userData: UserRegistrationData): Promise<{ success: boolean; error: string | null }> {
+  if (!supabase) {
+    return { success: false, error: 'Supabase client is not configured.' };
+  }
+
+  try {
+    const { error } = await supabase.from('user_entries').insert({
+      user_email: userData.email,
+      full_name: userData.fullName,
+      age: userData.age,
+      mobile: userData.mobile,
+      education_level: userData.educationLevel,
+      school_class: userData.schoolClass || null,
+      college_name: userData.collegeName || null,
+      college_course: userData.collegeCourse || null,
+      college_year: userData.collegeYear || null,
+      college_semester: userData.collegeSemester || null,
+      entry_type: 'student_registration',
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true, error: null };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Fetches user entries from Supabase
+ */
+export async function fetchUserEntriesFromSupabase(userEmail?: string): Promise<{ data: UserEntry[] | null; error: string | null }> {
+  if (!supabase) {
+    return { data: null, error: 'Supabase is not configured.' };
+  }
+
+  try {
+    let query = supabase.from('user_entries').select('*').order('created_at', { ascending: false });
+    if (userEmail) {
+      query = query.eq('user_email', userEmail);
+    }
+    const { data, error } = await query;
+    if (error) {
+      return { data: null, error: error.message };
+    }
+    return {
+      data: (data || []).map((row) => ({
+        id: row.id,
+        userEmail: row.user_email,
+        fullName: row.full_name,
+        mobile: row.mobile,
+        age: row.age,
+        educationLevel: row.education_level,
+        schoolClass: row.school_class,
+        collegeName: row.college_name,
+        collegeCourse: row.college_course,
+        collegeYear: row.college_year,
+        collegeSemester: row.college_semester,
+        entryType: row.entry_type,
+        notes: row.notes,
+        createdAt: row.created_at,
+      })),
+      error: null,
+    };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { data: null, error: error.message };
   }
 }

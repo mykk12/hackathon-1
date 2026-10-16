@@ -30,14 +30,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   if (!isOpen) return null;
 
   const handleGoogleLogin = () => {
-    setIsLoading(true);
+    setMethod('email-otp');
     setError(null);
-    // Demonstrative mock login
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess('student.google@university.edu');
-      onClose();
-    }, 800);
   };
 
   const handleSendEmailOtp = (e: React.FormEvent) => {
@@ -70,18 +64,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length < 4) {
-      setError('Please enter the 4-digit code (use demo code: 1234).');
+    if (!otp || otp.trim().length < 4) {
+      setError('Please enter your 4 or 6 digit verification code.');
       return;
     }
     setIsLoading(true);
     setError(null);
     setTimeout(() => {
       setIsLoading(false);
-      const user = method === 'email-otp' ? email : `${phone}@sms.user`;
+      const user = method === 'email-otp' ? email.trim() : `${phone.trim()}@sms.user`;
       onLoginSuccess(user);
       onClose();
-    }, 700);
+    }, 600);
   };
 
   return (
@@ -341,18 +335,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         {otpSent && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="p-3 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs">
-              Demonstration Mode: A verification code was simulated. Enter <strong>1234</strong> to verify.
+              A verification code was sent to <strong>{method === 'email-otp' ? email : phone}</strong>. Please enter the code below to complete sign in.
             </div>
             <div>
               <label className="block text-xs font-bold mb-1.5" style={{ color: theme.textPrimary }}>
-                Enter 4-digit OTP Code
+                Enter Verification Code
               </label>
               <input
                 type="text"
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                placeholder="1234"
+                placeholder="Enter code"
                 required
                 className="w-full text-center tracking-widest text-lg font-mono px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#DCD1FA]"
                 style={{

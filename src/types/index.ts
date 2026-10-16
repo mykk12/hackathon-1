@@ -22,6 +22,7 @@ export interface AcademicResource {
   fileData?: string;
   fileMimeType?: string;
   ownerEmail?: string;
+  userEntryId?: string;
 }
 
 export interface StudyTask {
@@ -32,6 +33,7 @@ export interface StudyTask {
   durationMinutes: number;
   completed: boolean;
   priority: 'low' | 'medium' | 'high' | 'max';
+  userEntryId?: string;
 }
 
 export type SidebarTab = 'home' | 'dashboard' | 'manage' | 'study-plan' | 'feedback';
@@ -48,4 +50,21 @@ export interface UserRegistrationData {
   email: string;
   mobile: string;
   otp?: string;
+}
+
+export interface UserEntry {
+  id: string;
+  userEmail: string;
+  fullName: string;
+  mobile?: string;
+  age?: string;
+  educationLevel?: 'school' | 'college' | '';
+  schoolClass?: string;
+  collegeName?: string;
+  collegeCourse?: string;
+  collegeYear?: string;
+  collegeSemester?: string;
+  entryType?: string;
+  notes?: string;
+  createdAt: string;
 }

@@ -99,123 +99,33 @@ export const PRIORITY_CONFIG: Record<
 };
 
 export const WorkCalendar: React.FC<WorkCalendarProps> = ({ theme, tasks }) => {
-  // Default to October 2026
-  const today = useMemo(() => new Date(2026, 9, 16), []); // Oct 16, 2026
+  const today = useMemo(() => new Date(), []);
+  const todayDateStr = useMemo(() => {
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, [today]);
+
   const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selectedDate, setSelectedDate] = useState<string>('2026-10-16');
+  const [selectedDate, setSelectedDate] = useState<string>(todayDateStr);
 
   // Convert tasks into structured scheduled items associated with calendar dates
   const scheduledTasksMap = useMemo(() => {
     const map: Record<string, CalendarScheduledTask[]> = {};
 
-    const initialCalendarTasks: CalendarScheduledTask[] = [
-      {
-        no: 1,
-        id: 'cal-task-1',
-        title: 'Review Data Structures Binary Tree traversals',
-        time: '4:00 PM',
-        subject: 'Computer Science',
-        completed: true,
-        dateStr: '2026-10-16',
-        priority: 'high',
-      },
-      {
-        no: 2,
-        id: 'cal-task-2',
-        title: 'Work through Calculus integration by parts worksheet',
-        time: '7:30 PM',
-        subject: 'Mathematics',
-        completed: false,
-        dateStr: '2026-10-16',
-        priority: 'high',
-      },
-      {
-        no: 1,
-        id: 'cal-task-3',
-        title: 'Memorize Cell Biology mitochondrial respiration stages',
-        time: '10:00 AM',
-        subject: 'Biology',
-        completed: false,
-        dateStr: '2026-10-17',
-        priority: 'medium',
-      },
-      {
-        no: 2,
-        id: 'cal-task-4',
-        title: 'Draft Financial Accounting ratio analysis summary',
-        time: '3:00 PM',
-        subject: 'Business',
-        completed: false,
-        dateStr: '2026-10-17',
-        priority: 'low',
-      },
-      {
-        no: 1,
-        id: 'cal-task-5',
-        title: 'Discrete Probability & Combinatorics Practice Exam',
-        time: '2:00 PM',
-        subject: 'Mathematics',
-        completed: false,
-        dateStr: '2026-10-19',
-        priority: 'high',
-      },
-      {
-        no: 2,
-        id: 'cal-task-6',
-        title: 'Object-Oriented Design Pattern Architecture Review',
-        time: '5:30 PM',
-        subject: 'Computer Science',
-        completed: false,
-        dateStr: '2026-10-19',
-        priority: 'medium',
-      },
-      {
-        no: 1,
-        id: 'cal-task-7',
-        title: 'Cardiovascular Circulation System Slides Recap',
-        time: '11:00 AM',
-        subject: 'Biology',
-        completed: false,
-        dateStr: '2026-10-22',
-        priority: 'low',
-      },
-      {
-        no: 1,
-        id: 'cal-task-8',
-        title: 'Operating Systems & Concurrency Final Review',
-        time: '5:00 PM',
-        subject: 'Computer Science',
-        completed: false,
-        dateStr: '2026-10-23',
-        priority: 'max',
-      },
-      {
-        no: 1,
-        id: 'cal-task-9',
-        title: 'Midterm Formula Sheet Revision & Self-Quiz',
-        time: '4:30 PM',
-        subject: 'Mathematics',
-        completed: false,
-        dateStr: '2026-10-26',
-        priority: 'max',
-      },
-    ];
-
-    initialCalendarTasks.forEach((t) => {
-      if (!map[t.dateStr]) map[t.dateStr] = [];
-      map[t.dateStr].push(t);
-    });
-
     tasks.forEach((t) => {
-      let targetDateStr = '2026-10-16';
-      let extractedTime = '4:00 PM';
+      let targetDateStr = todayDateStr;
+      let extractedTime = '12:00 PM';
 
       if (t.dueDate.toLowerCase().includes('today')) {
-        targetDateStr = '2026-10-16';
+        targetDateStr = todayDateStr;
         const match = t.dueDate.match(/\d+:\d+\s*[APMapm]+/);
         if (match) extractedTime = match[0];
       } else if (t.dueDate.toLowerCase().includes('tomorrow')) {
-        targetDateStr = '2026-10-17';
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        targetDateStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
         const match = t.dueDate.match(/\d+:\d+\s*[APMapm]+/);
         if (match) extractedTime = match[0];
       } else if (t.dueDate.includes('-')) {
@@ -434,7 +344,7 @@ export const WorkCalendar: React.FC<WorkCalendarProps> = ({ theme, tasks }) => {
               const dayTasks = scheduledTasksMap[dateKey] || [];
               const taskCount = dayTasks.length;
               const isSelected = selectedDate === dateKey;
-              const isToday = dateKey === '2026-10-16';
+              const isToday = dateKey === todayDateStr;
 
               // Colour of other blocks gets decided upon selection of date and tasks on that specific date
               const dynamicPreceding = selectedDatePrecedingMap[dateKey];

@@ -79,7 +79,10 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   const [newSubject, setNewSubject] = useState<SubjectType>('Computer Science');
   const [newDuration, setNewDuration] = useState('30');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high' | 'max'>('medium');
-  const [newDueDate, setNewDueDate] = useState('2026-10-21');
+  const [newDueDate, setNewDueDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [newDueTime, setNewDueTime] = useState('4:00 PM');
   const [isAdding, setIsAdding] = useState(true);
 

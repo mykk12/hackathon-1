@@ -281,7 +281,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                       username: e.target.value.replace(/[^a-zA-Z0-9._-]/g, '').toLowerCase(),
                     }))
                   }
-                  placeholder="mayank_bamil"
+                  placeholder="student_handle"
                   className="w-full text-xs font-mono font-bold pl-8 pr-3.5 py-2.5 rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-[#8E74DB] transition-all"
                   style={{
                     backgroundColor: theme.isDark ? 'rgba(32, 26, 46, 0.8)' : '#FFFFFF',

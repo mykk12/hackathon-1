@@ -79,8 +79,8 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
 
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.otp || formData.otp.length < 4) {
-      setError('Please enter the 4-digit code (use demo code 1234).');
+    if (!formData.otp || formData.otp.trim().length < 4) {
+      setError('Please enter your 4 or 6-digit verification code.');
       return;
     }
     setIsLoading(true);
@@ -392,7 +392,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                   required
                   value={formData.mobile}
                   onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                  placeholder="+1 555 019 2834"
+                  placeholder="e.g. +1 234 567 8900"
                   className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border focus:outline-none focus:ring-2 focus:ring-[#DCD1FA]"
                   style={{
                     backgroundColor: theme.inputBg,
@@ -420,20 +420,20 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="p-3.5 rounded-2xl bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs">
-              Demonstration Verification: A mock OTP was sent to <strong>{formData.mobile || formData.email}</strong>.
-              Enter code <strong>1234</strong> to complete registration.
+              A verification code was sent to <strong>{formData.mobile || formData.email}</strong>.
+              Enter your verification code below to complete registration.
             </div>
 
             <div>
               <label className="block text-xs font-bold mb-1.5" style={{ color: theme.textPrimary }}>
-                Enter 4-Digit Code
+                Enter Verification Code
               </label>
               <input
                 type="text"
                 maxLength={6}
                 value={formData.otp}
                 onChange={(e) => setFormData({ ...formData, otp: e.target.value })}
-                placeholder="1234"
+                placeholder="Enter code"
                 required
                 className="w-full text-center tracking-widest text-lg font-mono px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#DCD1FA]"
                 style={{
