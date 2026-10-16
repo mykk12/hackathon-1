@@ -1,0 +1,6 @@
+{
+  "name": "StudySpace",
+  "description": "Student Academic Resource & Planning Platform to discover academic resources, organize study materials, plan revisions, and collaborate with peers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
