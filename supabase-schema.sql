@@ -89,3 +89,53 @@ alter table public.ai_conversations enable row level security;
 create policy "Users can manage own AI conversation history"
   on public.ai_conversations for all
   using (auth.uid() = user_id);
+
+-- 5. Extracted Resource Chunks & Embeddings for StudySpace AI RAG
+create table if not exists public.resource_chunks (
+  id text primary key default concat('chunk-', uuid_generate_v4()),
+  resource_id text not null,
+  user_id uuid references auth.users on delete cascade,
+  title text not null,
+  subject text not null default 'Computer Science',
+  format text not null default 'pdf',
+  file_name text not null,
+  page_number integer default 1,
+  chunk_index integer not null default 0,
+  content text not null,
+  is_public boolean default false,
+  owner_email text,
+  storage_path text,
+  topics text[] default '{}',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.resource_chunks enable row level security;
+
+-- Public chunks can be retrieved by any student/guest
+create policy "Anyone can view public resource chunks"
+  on public.resource_chunks for select
+  using (is_public = true);
+
+-- Private chunks can only be retrieved by their owner
+create policy "Users can view own private resource chunks"
+  on public.resource_chunks for select
+  using (auth.uid() = user_id or auth.jwt()->>'email' = owner_email);
+
+-- Users can manage their own resource chunks
+create policy "Users can manage own resource chunks"
+  on public.resource_chunks for all
+  using (auth.uid() = user_id or auth.jwt()->>'email' = owner_email);
+
+-- 6. Storage Bucket Configuration for Uploaded Notes & Study Materials
+insert into storage.buckets (id, name, public)
+values ('study-materials', 'study-materials', true)
+on conflict (id) do nothing;
+
+create policy "Public materials are publicly accessible"
+  on storage.objects for select
+  using (bucket_id = 'study-materials');
+
+create policy "Authenticated users can upload study materials"
+  on storage.objects for insert
+  with check (bucket_id = 'study-materials' and auth.role() = 'authenticated');
+

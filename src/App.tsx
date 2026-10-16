@@ -115,21 +115,57 @@ export default function App() {
     }
   };
 
-  const handleAddResource = (newResource: AcademicResource) => {
+  const handleAddResource = async (newResource: AcademicResource) => {
     setResources((prev) => [newResource, ...prev]);
     // Also automatically bookmark for user
     handleToggleBookmark(newResource.id);
+
+    // Auto-index into server-side RAG Knowledge Base
+    try {
+      await fetch('/api/rag/index-resource', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource: newResource, userEmail: currentUser }),
+      });
+    } catch (e) {
+      console.warn('RAG auto-index error:', e);
+    }
   };
 
-  const handleDeleteResource = (id: string) => {
+  const handleDeleteResource = async (id: string) => {
     setResources((prev) => prev.filter((r) => r.id !== id));
     setBookmarks((prev) => prev.filter((b) => b !== id));
+
+    // Remove from server-side RAG Knowledge Base
+    try {
+      await fetch(`/api/rag/resource/${id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn('RAG delete error:', e);
+    }
   };
 
-  const handleUpdateResource = (updatedResource: AcademicResource) => {
+  const handleUpdateResource = async (updatedResource: AcademicResource) => {
     setResources((prev) =>
       prev.map((r) => (r.id === updatedResource.id ? updatedResource : r))
     );
+
+    // Re-index updated resource in server-side RAG
+    try {
+      await fetch('/api/rag/index-resource', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource: updatedResource, userEmail: currentUser }),
+      });
+    } catch (e) {
+      console.warn('RAG update error:', e);
+    }
+  };
+
+  const handleOpenResourceById = (resourceId: string) => {
+    const found = resources.find((r) => r.id === resourceId);
+    if (found) {
+      setSelectedResource(found);
+    }
   };
 
   const handleAddTask = (newTask: StudyTask) => {
@@ -408,8 +444,12 @@ export default function App() {
         currentUser={currentUser}
         savedCount={bookmarks.length}
         tasksCount={tasks.length}
+        tasks={tasks}
+        resources={resources}
+        bookmarks={bookmarks}
         onNavigate={handleSelectTab}
         onScrollToPopular={handleScrollToPopular}
+        onOpenResource={handleOpenResourceById}
       />
 
       {/* Floating Bottom-Right Feedback Widget */}

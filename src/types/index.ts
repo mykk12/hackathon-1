@@ -21,6 +21,7 @@ export interface AcademicResource {
   fileUrl?: string;
   fileData?: string;
   fileMimeType?: string;
+  ownerEmail?: string;
 }
 
 export interface StudyTask {

@@ -9,7 +9,7 @@ interface FeedbackViewProps {
 
 export const FeedbackView: React.FC<FeedbackViewProps> = ({ theme, onGoToHome }) => {
   const [category, setCategory] = useState<'subject-request' | 'resource-quality' | 'platform-suggestion' | 'general'>('subject-request');
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);

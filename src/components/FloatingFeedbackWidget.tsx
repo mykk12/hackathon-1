@@ -82,7 +82,7 @@ export const FloatingFeedbackWidget: React.FC<FloatingFeedbackWidgetProps> = ({
   onOpenFullPage,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewName, setReviewName] = useState(() => {
     if (currentUser) {
@@ -165,6 +165,7 @@ export const FloatingFeedbackWidget: React.FC<FloatingFeedbackWidgetProps> = ({
 
     setSubmittedMessage(true);
     setReviewComment('');
+    setRating(0);
     setTimeout(() => {
       setSubmittedMessage(false);
     }, 3500);
@@ -194,8 +195,10 @@ export const FloatingFeedbackWidget: React.FC<FloatingFeedbackWidgetProps> = ({
         return '3 / 5 · Good 🙂';
       case 2:
         return '2 / 5 · Fair ⚠️';
-      default:
+      case 1:
         return '1 / 5 · Needs Work';
+      default:
+        return '0 / 5 · Select stars';
     }
   };
 
@@ -483,41 +486,46 @@ export const FloatingFeedbackWidget: React.FC<FloatingFeedbackWidgetProps> = ({
         </div>
       )}
 
-      {/* Floating Action Trigger Button - Glassmorphism 80% Transparent */}
+      {/* Floating Action Trigger Button - Glass Style matching AI button */}
       <button
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
-        aria-label="Student Feedback"
-        className="group flex items-center gap-2.5 px-4 py-3 rounded-full shadow-2xl backdrop-blur-2xl transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#DCD1FA]"
+        aria-label="Student Feedback and Reviews"
+        title="Student Reviews & Feedback"
+        className="group relative flex items-center justify-center w-14 h-14 rounded-2xl shadow-2xl backdrop-blur-2xl transition-all duration-300 hover:scale-108 active:scale-95 cursor-pointer focus:outline-hidden hover:shadow-[0_12px_36px_-2px_rgba(142,116,219,0.5),0_0_24px_4px_rgba(220,209,250,0.4)]"
         style={{
-          backgroundColor: theme.isDark ? 'rgba(32, 26, 48, 0.20)' : 'rgba(48, 39, 71, 0.20)', // 80% transparent (20% opacity)
+          background: theme.isDark
+            ? 'linear-gradient(135deg, rgba(32, 26, 48, 0.55) 0%, rgba(48, 39, 71, 0.45) 50%, rgba(20, 16, 30, 0.65) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(245, 240, 255, 0.6) 50%, rgba(255, 255, 255, 0.5) 100%)',
           color: theme.isDark ? '#FFF9F0' : '#302747',
-          backdropFilter: 'blur(16px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          backdropFilter: 'blur(20px) saturate(190%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(190%)',
           border: theme.isDark
-            ? '1.5px solid rgba(255, 255, 255, 0.20)'
-            : '1.5px solid rgba(255, 255, 255, 0.55)',
+            ? '2px solid rgba(220, 209, 250, 0.45)'
+            : '2px solid rgba(255, 255, 255, 0.85)',
           boxShadow: theme.isDark
-            ? '0 8px 32px 0 rgba(0, 0, 0, 0.40), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25)'
-            : '0 8px 32px 0 rgba(48, 39, 71, 0.12), inset 0 1px 2px 0 rgba(255, 255, 255, 0.85), 0 0 0 1px rgba(48, 39, 71, 0.08)',
+            ? '0 10px 30px -4px rgba(0, 0, 0, 0.6), 0 0 20px 2px rgba(142, 116, 219, 0.3), inset 0 1px 2px 0 rgba(255, 255, 255, 0.25)'
+            : '0 10px 30px -4px rgba(48, 39, 71, 0.16), 0 0 20px 2px rgba(220, 209, 250, 0.35), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95), 0 0 0 1px rgba(48, 39, 71, 0.08)',
         }}
       >
-        <div
-          className="w-6 h-6 rounded-full flex items-center justify-center transition-transform group-hover:rotate-12 backdrop-blur-md shadow-xs"
-          style={{
-            backgroundColor: theme.isDark ? 'rgba(220, 209, 250, 0.25)' : 'rgba(220, 209, 250, 0.65)',
-            color: theme.isDark ? '#DCD1FA' : '#302747',
-            border: '1px solid rgba(255, 255, 255, 0.45)',
-          }}
-        >
-          {isOpen ? <X className="w-3.5 h-3.5" /> : <MessageSquareQuote className="w-3.5 h-3.5" />}
+        {/* Luminous background pulse on hover */}
+        <span className="absolute inset-0 rounded-2xl bg-purple-400/15 group-hover:bg-purple-400/25 transition-colors animate-pulse" />
+
+        {/* Feedback Icon matching AI button scale */}
+        <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12">
+          {isOpen ? (
+            <X className="w-6 h-6 text-purple-300" />
+          ) : (
+            <MessageSquareQuote className="w-6 h-6 text-purple-300 dark:text-purple-200" />
+          )}
         </div>
-        <span className="font-bold text-xs sm:text-sm tracking-tight drop-shadow-xs">Feedback</span>
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+
+        {/* Live Notification Indicator Dot matching AI button */}
+        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 z-20">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500 border-2 border-[#302747]" />
         </span>
       </button>
     </div>
