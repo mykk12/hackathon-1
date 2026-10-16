@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   FolderKanban,
   CalendarClock,
-  MessageSquareQuote,
   LogOut,
   User,
 } from 'lucide-react';
@@ -41,7 +40,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'manage', label: 'Manage', icon: FolderKanban },
   { id: 'study-plan', label: 'Study Plan', icon: CalendarClock },
-  { id: 'feedback', label: 'Feedback', icon: MessageSquareQuote },
 ];
 
 export const Header: React.FC<HeaderProps> = ({

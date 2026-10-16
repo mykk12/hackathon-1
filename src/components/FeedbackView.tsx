@@ -30,15 +30,9 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ theme, onGoToHome })
     <div className="py-6 sm:py-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in">
       <div className="flex items-center justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#8E74DB' }}>
-            <span>Community Voice</span>
-          </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
             Student Feedback
           </h1>
-          <p className="text-sm font-medium mt-1" style={{ color: theme.textSecondary }}>
-            Tell us which academic subjects, formula sheets, or platform features you'd like added.
-          </p>
         </div>
 
         <button

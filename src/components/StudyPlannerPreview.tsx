@@ -211,18 +211,48 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
                         </div>
                       </div>
 
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-md self-start sm:self-auto shrink-0"
-                        style={{
-                          backgroundColor:
-                            task.priority === 'high'
-                              ? 'rgba(239, 68, 68, 0.15)'
-                              : 'rgba(59, 130, 246, 0.15)',
-                          color: task.priority === 'high' ? '#EF4444' : '#3B82F6',
-                        }}
-                      >
-                        {task.dueDate}
-                      </span>
+                      <div className="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+                        <span
+                          className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded border"
+                          style={{
+                            backgroundColor:
+                              task.priority === 'max'
+                                ? '#FEE2E2'
+                                : task.priority === 'high'
+                                ? '#FFEDD5'
+                                : task.priority === 'medium'
+                                ? '#FCE7F3'
+                                : '#FEF9C3',
+                            borderColor:
+                              task.priority === 'max'
+                                ? '#EF4444'
+                                : task.priority === 'high'
+                                ? '#F97316'
+                                : task.priority === 'medium'
+                                ? '#EC4899'
+                                : '#EAB308',
+                            color:
+                              task.priority === 'max'
+                                ? '#991B1B'
+                                : task.priority === 'high'
+                                ? '#9A3412'
+                                : task.priority === 'medium'
+                                ? '#9D174D'
+                                : '#854D0E',
+                          }}
+                        >
+                          {task.priority === 'max' ? '🔴 Max' : task.priority === 'high' ? '🟠 High' : task.priority === 'medium' ? '🌸 Med' : '🟡 Low'}
+                        </span>
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                          style={{
+                            backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                            color: theme.textSecondary,
+                          }}
+                        >
+                          {task.dueDate}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>

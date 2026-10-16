@@ -1,6 +1,6 @@
 export type SubjectType = 'Computer Science' | 'Mathematics' | 'Biology' | 'Business';
 
-export type ResourceFormat = 'PDF' | 'Notes' | 'Slides';
+export type ResourceFormat = 'PDF' | 'Notes' | 'Slides' | 'PPT' | 'DOC' | 'Photo' | 'Spreadsheet';
 
 export interface AcademicResource {
   id: string;
@@ -16,6 +16,11 @@ export interface AcademicResource {
   topics: string[];
   isPublic: boolean;
   dateAdded: string;
+  fileName?: string;
+  fileSize?: string;
+  fileUrl?: string;
+  fileData?: string;
+  fileMimeType?: string;
 }
 
 export interface StudyTask {
@@ -25,7 +30,7 @@ export interface StudyTask {
   dueDate: string;
   durationMinutes: number;
   completed: boolean;
-  priority: 'low' | 'medium' | 'high';
+  priority: 'low' | 'medium' | 'high' | 'max';
 }
 
 export type SidebarTab = 'home' | 'dashboard' | 'manage' | 'study-plan' | 'feedback';

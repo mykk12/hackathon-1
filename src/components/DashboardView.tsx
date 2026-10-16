@@ -11,6 +11,7 @@ interface DashboardViewProps {
   onOpenResource: (resource: AcademicResource) => void;
   onGoToPlanner: () => void;
   onGoToHome: () => void;
+  onOpenUpload?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -20,6 +21,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenResource,
   onGoToPlanner,
   onGoToHome,
+  onOpenUpload,
 }) => {
   const completedTasks = tasks.filter((t) => t.completed).length;
 
@@ -28,27 +30,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#8E74DB' }}>
-            <span>Personal Academic Space</span>
-            <span>·</span>
-            <span>Semester Active</span>
-          </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
             Student Dashboard
           </h1>
-          <p className="text-sm font-medium mt-1" style={{ color: theme.textSecondary }}>
-            Track study velocity, revisit saved materials, and monitor ongoing revision targets.
-          </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onGoToHome}
-          className="px-4 py-2 rounded-xl text-xs font-bold border cursor-pointer hover:opacity-80 self-start sm:self-auto"
-          style={{ borderColor: theme.surfaceBorder, color: theme.textPrimary }}
-        >
-          ← Back to Homepage
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {onOpenUpload && (
+            <button
+              type="button"
+              onClick={onOpenUpload}
+              className="px-4 py-2 rounded-xl text-xs font-bold shadow-xs cursor-pointer hover:opacity-90 flex items-center gap-1.5"
+              style={{ backgroundColor: '#302747', color: '#FFF9F0' }}
+            >
+              <span>+ Upload Study Material</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onGoToHome}
+            className="px-4 py-2 rounded-xl text-xs font-bold border cursor-pointer hover:opacity-80"
+            style={{ borderColor: theme.surfaceBorder, color: theme.textPrimary }}
+          >
+            ← Back to Homepage
+          </button>
+        </div>
       </div>
 
       {/* Metrics Row */}
@@ -230,13 +236,105 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       {task.subject} · {task.durationMinutes} mins
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600">
-                    {task.dueDate}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className="text-[9.5px] font-black uppercase px-2 py-0.5 rounded border"
+                      style={{
+                        backgroundColor:
+                          task.priority === 'max'
+                            ? '#FEE2E2'
+                            : task.priority === 'high'
+                            ? '#FFEDD5'
+                            : task.priority === 'medium'
+                            ? '#FCE7F3'
+                            : '#FEF9C3',
+                        borderColor:
+                          task.priority === 'max'
+                            ? '#EF4444'
+                            : task.priority === 'high'
+                            ? '#F97316'
+                            : task.priority === 'medium'
+                            ? '#EC4899'
+                            : '#EAB308',
+                        color:
+                          task.priority === 'max'
+                            ? '#991B1B'
+                            : task.priority === 'high'
+                            ? '#9A3412'
+                            : task.priority === 'medium'
+                            ? '#9D174D'
+                            : '#854D0E',
+                      }}
+                    >
+                      {task.priority === 'max' ? '🔴 Max' : task.priority === 'high' ? '🟠 High' : task.priority === 'medium' ? '🌸 Med' : '🟡 Low'}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/5 dark:bg-white/10" style={{ color: theme.textPrimary }}>
+                      {task.dueDate}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Interactive Option of Medium Size: Upload & Share Study Material */}
+          {onOpenUpload && (
+            <div
+              onClick={onOpenUpload}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpenUpload();
+                }
+              }}
+              className="p-5 rounded-3xl backdrop-blur-xl border-2 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#8E74DB]"
+              style={{
+                backgroundColor: theme.isDark ? 'rgba(220, 209, 250, 0.08)' : 'rgba(220, 209, 250, 0.25)',
+                borderColor: '#DCD1FA',
+              }}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center font-bold shadow-xs transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: '#DCD1FA', color: '#302747' }}
+                  >
+                    +
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm sm:text-base group-hover:underline" style={{ color: theme.textPrimary }}>
+                      Upload Study Deck
+                    </h3>
+                    <p className="text-[11px] font-medium" style={{ color: theme.textSecondary }}>
+                      PPT, DOC, PDF, Photo, Sheets, Notes
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  Interactive
+                </span>
+              </div>
+
+              <p className="text-xs leading-relaxed mb-4" style={{ color: theme.textSecondary }}>
+                Upload notes and revision sheets. Previews are generated instantly, and you can share publicly with peers or save privately to My Uploaded Decks.
+              </p>
+
+              <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: theme.surfaceBorder }}>
+                <span className="text-[11px] font-bold text-[#8E74DB] group-hover:underline">
+                  Click to select file format & upload →
+                </span>
+                <span
+                  className="px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs"
+                  style={{ backgroundColor: '#302747', color: '#FFF9F0' }}
+                >
+                  Upload Material
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

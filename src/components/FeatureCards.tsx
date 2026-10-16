@@ -10,12 +10,15 @@ interface FeatureCardsProps {
 
 export const FeatureCards: React.FC<FeatureCardsProps> = ({
   theme,
+  savedCount,
+  onSelectFeature,
 }) => {
   const cards = [
     {
-      id: 'library',
+      id: 'library' as const,
       title: 'Resource Library',
       description: 'Notes, PDFs, presentations, and curated academic reference links.',
+      actionLabel: 'Explore Library →',
       icon: BookOpen,
       pastelTranslucent: 'rgba(220, 209, 250, 0.42)', // Soft lavender translucent
       darkTranslucent: 'rgba(220, 209, 250, 0.14)',
@@ -27,9 +30,10 @@ export const FeatureCards: React.FC<FeatureCardsProps> = ({
       delay: '0ms',
     },
     {
-      id: 'planner',
+      id: 'planner' as const,
       title: 'Study Planner',
       description: 'Organize revision sprints, balance task workloads, and monitor velocity.',
+      actionLabel: 'Open Planner →',
       icon: Calendar,
       pastelTranslucent: 'rgba(188, 233, 213, 0.42)', // Mint green translucent
       darkTranslucent: 'rgba(188, 233, 213, 0.14)',
@@ -41,9 +45,10 @@ export const FeatureCards: React.FC<FeatureCardsProps> = ({
       delay: '150ms',
     },
     {
-      id: 'saved',
+      id: 'saved' as const,
       title: 'Saved Materials',
-      description: 'Keep verified revision resources organized in a distraction-free repository.',
+      description: savedCount ? `${savedCount} verified revision resources saved in your repository.` : 'Keep verified revision resources organized in a distraction-free repository.',
+      actionLabel: 'View Saved Decks →',
       icon: Bookmark,
       pastelTranslucent: 'rgba(246, 235, 196, 0.48)', // Butter yellow translucent
       darkTranslucent: 'rgba(246, 235, 196, 0.14)',
@@ -55,9 +60,10 @@ export const FeatureCards: React.FC<FeatureCardsProps> = ({
       delay: '300ms',
     },
     {
-      id: 'share',
+      id: 'share' as const,
       title: 'Share with Peers',
-      description: 'Contribute high-yield study material and exchange notes with fellow students.',
+      description: 'Upload study notes, slides, PDFs, and whiteboard photos to exchange with peers.',
+      actionLabel: 'Upload Material (PPT, DOC, PDF, Photo) →',
       icon: Share2,
       pastelTranslucent: 'rgba(255, 209, 184, 0.42)', // Peach translucent
       darkTranslucent: 'rgba(255, 209, 184, 0.14)',
@@ -82,12 +88,12 @@ export const FeatureCards: React.FC<FeatureCardsProps> = ({
               What would you like to do?
             </h2>
             <p className="text-sm sm:text-base font-medium mt-1" style={{ color: theme.textSecondary }}>
-              Structured, ready-to-use study templates designed for deep focus and revision.
+              Click any option below to browse resources, manage schedule, or upload study decks.
             </p>
           </div>
         </div>
 
-        {/* Responsive Grid: Non-clickable, popping-up translucent cards with right-to-left fade-in reference images */}
+        {/* Responsive Grid: Clickable, interactive cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {cards.map((card) => {
             const Icon = card.icon;
@@ -96,13 +102,21 @@ export const FeatureCards: React.FC<FeatureCardsProps> = ({
             return (
               <div
                 key={card.id}
-                role="region"
-                aria-label={card.title}
-                className="group relative p-6 rounded-3xl text-left flex flex-col justify-between overflow-hidden select-none cursor-default backdrop-blur-xl transition-all duration-300 hover:-translate-y-2"
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectFeature?.(card.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectFeature?.(card.id);
+                  }
+                }}
+                aria-label={`${card.title}: ${card.description}`}
+                className="group relative p-6 rounded-3xl text-left flex flex-col justify-between overflow-hidden cursor-pointer backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#8E74DB]"
                 style={{
                   backgroundColor: theme.isDark ? card.darkTranslucent : card.pastelTranslucent,
                   border: `1px solid ${theme.isDark ? 'rgba(255, 255, 255, 0.12)' : card.borderColor}`,
-                  minHeight: '220px',
+                  minHeight: '230px',
                   boxShadow: theme.isDark
                     ? '0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)'
                     : '0 20px 40px -15px rgba(48, 39, 71, 0.12), 0 8px 16px -6px rgba(48, 39, 71, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.85)',
@@ -143,35 +157,51 @@ export const FeatureCards: React.FC<FeatureCardsProps> = ({
                   style={{ backgroundColor: card.pastelTranslucent }}
                 />
 
-                {/* Content layer: Icon, Header, and Subheading texts ONLY */}
-                <div className="relative z-10 max-w-[70%] sm:max-w-[72%]">
-                  {/* 1. Icon */}
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm backdrop-blur-md mb-4 transition-transform duration-300 group-hover:scale-105"
-                    style={{
-                      backgroundColor: theme.isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.85)',
-                      color: cardTextColor,
-                      border: '1px solid rgba(255, 255, 255, 0.45)',
-                    }}
-                  >
-                    <Icon className="w-6 h-6" />
+                {/* Content layer: Icon, Header, Subheading, and Interactive Action Pill */}
+                <div className="relative z-10 max-w-[85%] sm:max-w-[80%] flex flex-col h-full justify-between">
+                  <div>
+                    {/* 1. Icon */}
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm backdrop-blur-md mb-4 transition-transform duration-300 group-hover:scale-110"
+                      style={{
+                        backgroundColor: theme.isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.85)',
+                        color: cardTextColor,
+                        border: '1px solid rgba(255, 255, 255, 0.45)',
+                      }}
+                    >
+                      <Icon className="w-6 h-6" />
+                    </div>
+
+                    {/* 2. Header */}
+                    <h3
+                      className="text-lg sm:text-xl font-bold tracking-tight mb-2 group-hover:underline"
+                      style={{ color: cardTextColor }}
+                    >
+                      {card.title}
+                    </h3>
+
+                    {/* 3. Subheading text */}
+                    <p
+                      className="text-xs sm:text-sm font-medium leading-relaxed opacity-90"
+                      style={{ color: cardTextColor }}
+                    >
+                      {card.description}
+                    </p>
                   </div>
 
-                  {/* 2. Header */}
-                  <h3
-                    className="text-lg sm:text-xl font-bold tracking-tight mb-2"
-                    style={{ color: cardTextColor }}
-                  >
-                    {card.title}
-                  </h3>
-
-                  {/* 3. Subheading text */}
-                  <p
-                    className="text-xs sm:text-sm font-medium leading-relaxed opacity-90"
-                    style={{ color: cardTextColor }}
-                  >
-                    {card.description}
-                  </p>
+                  {/* 4. Interactive Action Pill */}
+                  <div className="mt-4 pt-1">
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs backdrop-blur-md transition-all group-hover:scale-105"
+                      style={{
+                        backgroundColor: theme.isDark ? 'rgba(0, 0, 0, 0.55)' : 'rgba(255, 255, 255, 0.9)',
+                        color: cardTextColor,
+                        border: `1px solid ${theme.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'}`,
+                      }}
+                    >
+                      <span>{card.actionLabel}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             );

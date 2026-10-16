@@ -44,11 +44,6 @@ export const Footer: React.FC<FooterProps> = ({
               </span>
             </div>
 
-            <p className="text-sm font-medium leading-relaxed max-w-sm mb-4" style={{ color: theme.textSecondary }}>
-              An academic resource discovery and revision planning platform crafted for students.
-              Study calmer, retain concepts deeper, and collaborate freely with peers.
-            </p>
-
             <div className="flex items-center gap-2 text-xs" style={{ color: theme.textMuted }}>
               <span>Built with care for learners worldwide</span>
               <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />

@@ -2,6 +2,38 @@ import type { AcademicResource, StudyTask, SubjectType } from '../types/index.ts
 
 export const INITIAL_RESOURCES: AcademicResource[] = [
   {
+    id: 'user-res-1',
+    title: 'Midterm Algorithms & Graph Review',
+    fileName: 'Midterm_Algorithms_Graph_Review.pdf',
+    subject: 'Computer Science',
+    format: 'PDF',
+    author: 'You (Student)',
+    institution: 'My University',
+    readsCount: 142,
+    rating: 4.9,
+    pages: 18,
+    summary: 'Personal handwritten summaries for Dijkstra, Bellman-Ford, Kruskals, and topological sorting algorithms.',
+    topics: ['Graphs', 'Shortest Path', 'Topological Sort'],
+    isPublic: true,
+    dateAdded: '2026-10-12',
+  },
+  {
+    id: 'user-res-2',
+    title: 'Biochemistry Reaction Pathways & Enzymes',
+    fileName: 'Biochemistry_Reaction_Pathways.docx',
+    subject: 'Biology',
+    format: 'DOC',
+    author: 'You (Student)',
+    institution: 'My University',
+    readsCount: 89,
+    rating: 4.8,
+    pages: 12,
+    summary: 'Private study guide for glycolysis, Krebs cycle, and enzyme kinematics equations before lab exams.',
+    topics: ['Enzymes', 'Glycolysis', 'Bioenergetics'],
+    isPublic: false,
+    dateAdded: '2026-10-14',
+  },
+  {
     id: 'res-1',
     title: 'Data Structures — Quick Revision',
     subject: 'Computer Science',
@@ -400,12 +432,21 @@ export const INITIAL_STUDY_TASKS: StudyTask[] = [
     completed: false,
     priority: 'low',
   },
+  {
+    id: 'task-5',
+    title: 'Operating Systems & Concurrency Final Review',
+    subject: 'Computer Science',
+    dueDate: '2026-10-23, 5:00 PM',
+    durationMinutes: 90,
+    completed: false,
+    priority: 'max',
+  },
 ];
 
 export const BOOKMARKS_STORAGE_KEY = 'studyspace_bookmarks';
 
 export function loadSavedBookmarks(): string[] {
-  if (typeof window === 'undefined') return ['res-1', 'res-3'];
+  if (typeof window === 'undefined') return ['user-res-1', 'res-1', 'res-3'];
   try {
     const raw = localStorage.getItem(BOOKMARKS_STORAGE_KEY);
     if (raw) {
@@ -415,7 +456,7 @@ export function loadSavedBookmarks(): string[] {
   } catch {
     // fallback
   }
-  return ['res-1', 'res-3']; // Default demo saved items
+  return ['user-res-1', 'res-1', 'res-3']; // Default demo saved items
 }
 
 export function saveBookmarks(bookmarks: string[]): void {

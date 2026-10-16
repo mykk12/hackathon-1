@@ -15,6 +15,7 @@ import { DashboardView } from './components/DashboardView.tsx';
 import { ManageView } from './components/ManageView.tsx';
 import { StudyPlanView } from './components/StudyPlanView.tsx';
 import { FeedbackView } from './components/FeedbackView.tsx';
+import { FloatingFeedbackWidget } from './components/FloatingFeedbackWidget.tsx';
 
 import type { SidebarTab, SubjectType, AcademicResource, StudyTask, UserRegistrationData } from './types/index.ts';
 import {
@@ -77,9 +78,9 @@ export default function App() {
     });
   };
 
-  // Filtered resources for search and exploration
+  // Filtered resources for search and exploration - ONLY public resources appear in public peer library
   const filteredResources = filterAcademicResources(
-    resources,
+    resources.filter((r) => r.isPublic !== false),
     searchQuery,
     selectedSubject,
     selectedFormat
@@ -109,11 +110,7 @@ export default function App() {
     } else if (feature === 'saved') {
       handleSelectTab('manage');
     } else if (feature === 'share') {
-      if (!currentUser) {
-        setIsLoginOpen(true);
-      } else {
-        setIsShareModalOpen(true);
-      }
+      setIsShareModalOpen(true);
     }
   };
 
@@ -121,6 +118,17 @@ export default function App() {
     setResources((prev) => [newResource, ...prev]);
     // Also automatically bookmark for user
     handleToggleBookmark(newResource.id);
+  };
+
+  const handleDeleteResource = (id: string) => {
+    setResources((prev) => prev.filter((r) => r.id !== id));
+    setBookmarks((prev) => prev.filter((b) => b !== id));
+  };
+
+  const handleUpdateResource = (updatedResource: AcademicResource) => {
+    setResources((prev) =>
+      prev.map((r) => (r.id === updatedResource.id ? updatedResource : r))
+    );
   };
 
   const handleAddTask = (newTask: StudyTask) => {
@@ -286,6 +294,7 @@ export default function App() {
               onOpenResource={(res) => setSelectedResource(res)}
               onGoToPlanner={() => setCurrentTab('study-plan')}
               onGoToHome={() => setCurrentTab('home')}
+              onOpenUpload={() => setIsShareModalOpen(true)}
             />
           )}
 
@@ -298,6 +307,9 @@ export default function App() {
               onOpenResource={(res) => setSelectedResource(res)}
               onOpenShareModal={() => setIsShareModalOpen(true)}
               onGoToHome={() => setCurrentTab('home')}
+              onBrowsePublic={handleScrollToPopular}
+              onDeleteResource={handleDeleteResource}
+              onUpdateResource={handleUpdateResource}
             />
           )}
 
@@ -386,6 +398,16 @@ export default function App() {
         onClose={() => setIsShareModalOpen(false)}
         onAddResource={handleAddResource}
         theme={theme}
+      />
+
+      {/* Floating Bottom-Right Feedback Widget */}
+      <FloatingFeedbackWidget
+        theme={theme}
+        currentUser={currentUser}
+        onOpenFullPage={() => {
+          setCurrentTab('feedback');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
     </div>
   );
