@@ -80,7 +80,7 @@ export default function App() {
     });
   };
 
-  // Filtered resources for search and exploration - ONLY public resources appear in public peer library
+  // Filtered resources for search and exploration - ONLY public resources appear in public buddies library
   const filteredResources = filterAcademicResources(
     resources.filter((r) => r.isPublic !== false),
     searchQuery,

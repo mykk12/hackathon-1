@@ -978,7 +978,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
                               ? '📁 View Uploaded Files & Manage'
                               : msg.suggestedAction === 'dashboard'
                               ? '📊 Go to Dashboard Overview'
-                              : '🔍 Browse Peer Library'}
+                              : '🔍 Browse Buddies Library'}
                           </span>
                           <ArrowRight className="w-3 h-3" />
                         </button>

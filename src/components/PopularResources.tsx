@@ -50,10 +50,10 @@ export const PopularResources: React.FC<PopularResourcesProps> = ({
   return (
     <section className="py-8 sm:py-12" id="popular-resources">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Block: "Resources By Peens" - Solid, non-translucent design */}
+        {/* Block: "Resources By Buddies" - Solid, non-translucent design */}
         <div
           role="region"
-          aria-label="Resources By Peens block"
+          aria-label="Resources By Buddies block"
           className="p-6 sm:p-8 lg:p-10 rounded-3xl sm:rounded-4xl shadow-md transition-colors duration-200"
           style={{
             backgroundColor: theme.isDark ? '#201A2E' : '#FFFFFF', // Solid non-translucent surface
@@ -70,7 +70,7 @@ export const PopularResources: React.FC<PopularResourcesProps> = ({
                 className="text-2xl sm:text-3xl font-extrabold tracking-tight"
                 style={{ color: theme.textPrimary }}
               >
-                Resources By Peens
+                Resources By Buddies
               </h2>
             </div>
 

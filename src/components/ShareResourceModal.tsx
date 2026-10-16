@@ -251,7 +251,7 @@ export const ShareResourceModal: React.FC<ShareResourceModalProps> = ({
       title: fileNameInput.trim(),
       subject,
       format: selectedFormat, // Auto-selected as selected before by user
-      author: author.trim() || 'Student Peer',
+      author: author.trim() || 'Student Buddy',
       institution: 'StudySpace Academic Network',
       readsCount: 1,
       rating: 5.0,
@@ -260,7 +260,7 @@ export const ShareResourceModal: React.FC<ShareResourceModalProps> = ({
       topics: keyTopics
         ? keyTopics.split(',').map((t) => t.trim()).filter(Boolean)
         : [subject, selectedFormat],
-      isPublic, // public -> gets shared on resources by peers; private -> accessible only from my uploaded decks
+      isPublic, // public -> gets shared on resources by buddies; private -> accessible only from my uploaded decks
       dateAdded: new Date().toISOString().split('T')[0],
       fileName: loadedFileName || fileNameInput,
       fileSize: loadedFileSize || '1.8 MB',
@@ -348,7 +348,7 @@ export const ShareResourceModal: React.FC<ShareResourceModalProps> = ({
               </h3>
               <p className="text-xs sm:text-sm max-w-md mx-auto" style={{ color: theme.textSecondary }}>
                 {isPublic
-                  ? 'Your study deck has been published with full details and is now accessible to peers across StudySpace.'
+                  ? 'Your study deck has been published with full details and is now accessible to buddies across StudySpace.'
                   : 'Your document is saved privately in "My Uploaded Decks" and is only accessible by your account.'}
               </p>
             </div>
@@ -634,7 +634,7 @@ export const ShareResourceModal: React.FC<ShareResourceModalProps> = ({
                       </span>
                     </div>
                     <p className="text-[11px] leading-relaxed font-semibold text-purple-700 dark:text-purple-300">
-                      Public — gets shared on resources by peers with details filled as selected by user.
+                      Public — gets shared on resources by buddies with details filled as selected by user.
                     </p>
                     <p className="text-[10px] mt-1 leading-normal" style={{ color: theme.textMuted }}>
                       Visible to all students in the public library and explore space.
@@ -667,7 +667,7 @@ export const ShareResourceModal: React.FC<ShareResourceModalProps> = ({
                       Private — accessible for the user only from my uploaded decks.
                     </p>
                     <p className="text-[10px] mt-1 leading-normal" style={{ color: theme.textMuted }}>
-                      Hidden from public peer searches; only you can view and study this file.
+                      Hidden from public searches; only you can view and study this file.
                     </p>
                   </div>
                 </div>

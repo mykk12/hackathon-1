@@ -61,8 +61,8 @@ export const FeatureCards: React.FC<FeatureCardsProps> = ({
     },
     {
       id: 'share' as const,
-      title: 'Share with Peers',
-      description: 'Upload study notes, slides, PDFs, and whiteboard photos to exchange with peers.',
+      title: 'Share with Buddies',
+      description: 'Upload study notes, slides, PDFs, and whiteboard photos to exchange with buddies.',
       actionLabel: 'Upload Material (PPT, DOC, PDF, Photo) →',
       icon: Share2,
       pastelTranslucent: 'rgba(255, 209, 184, 0.42)', // Peach translucent

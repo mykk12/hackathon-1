@@ -319,7 +319,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               <p className="text-xs leading-relaxed mb-4" style={{ color: theme.textSecondary }}>
-                Upload notes and revision sheets. Previews are generated instantly, and you can share publicly with peers or save privately to My Uploaded Decks.
+                Upload notes and revision sheets. Previews are generated instantly, and you can share publicly with buddies or save privately to My Uploaded Decks.
               </p>
 
               <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: theme.surfaceBorder }}>

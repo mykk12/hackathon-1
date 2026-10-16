@@ -113,7 +113,7 @@ export async function fetchAuthorizedUserResources(userId: string): Promise<{
         pages: row.pages,
         isPublic: Boolean(row.is_public),
         dateAdded: row.created_at || new Date().toISOString(),
-        author: row.author || 'Anonymous Peer',
+        author: row.author || 'Anonymous Buddy',
         readsCount: row.reads_count ?? 0,
         rating: row.rating ?? 5.0,
         summary: row.summary || row.title,

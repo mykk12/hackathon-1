@@ -169,7 +169,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
     const isGoogleAuth = Boolean(currentUser && (currentUser.includes('@gmail.com') || currentUser.includes('@university.edu') || currentUser.includes('@')));
     const newReview: ResourceReview = {
       id: `rev-${Date.now()}`,
-      name: reviewerName.trim() || (currentUser ? currentUser.split('@')[0] : 'Student Peer'),
+      name: reviewerName.trim() || (currentUser ? currentUser.split('@')[0] : 'Student Buddy'),
       rating: rating > 0 ? rating : 5,
       comment: reviewComment.trim(),
       date: 'Just now',
@@ -338,7 +338,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
             <div className="flex items-center gap-1" style={{ color: '#F59E0B' }}>
               <Star className="w-4 h-4 fill-amber-500" />
               <span className="font-bold">{avgRating}</span>
-              <span className="text-[11px] opacity-75">({reviews.length} peer reviews)</span>
+              <span className="text-[11px] opacity-75">({reviews.length} buddy reviews)</span>
             </div>
           )}
           {resource.pages && (
@@ -357,7 +357,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         >
           <BookOpen className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
           <div>
-            <strong>Demonstration Resource:</strong> StudySpace provides peer-verified study structures and curated cheat sheets.
+            <strong>Demonstration Resource:</strong> StudySpace provides buddy-verified study structures and curated cheat sheets.
             You can bookmark this item into your local revision deck or export the syllabus roadmap.
           </div>
         </div>
@@ -457,7 +457,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
               </div>
               <div>
                 <h3 className="text-base font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-                  Rating & Peer Reviews
+                  Rating & Buddy Reviews
                 </h3>
                 <p className="text-xs font-medium" style={{ color: theme.textMuted }}>
                   Rate this study resource and share feedback with fellow students
@@ -692,7 +692,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                 </div>
               ) : (
                 <span className="text-[11px] font-medium opacity-70" style={{ color: theme.textMuted }}>
-                  Reviews help peers discover top-tier study notes.
+                  Reviews help buddies discover top-tier study notes.
                 </span>
               )}
 
@@ -721,7 +721,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                 <span>Reviews from Other Students ({reviews.length})</span>
               </h4>
               <span className="text-[11px] font-semibold" style={{ color: theme.textMuted }}>
-                Verified peer feedback
+                Verified buddy feedback
               </span>
             </div>
 

@@ -426,7 +426,7 @@ export const ManageView: React.FC<ManageViewProps> = ({
             Manage Materials
           </h1>
           <p className="text-xs sm:text-sm font-medium mt-1" style={{ color: theme.textSecondary }}>
-            Organize personal uploads, bookmarked decks, and peer-contributed study documents
+            Organize personal uploads, bookmarked decks, and buddy-contributed study documents
           </p>
         </div>
 
@@ -759,7 +759,7 @@ export const ManageView: React.FC<ManageViewProps> = ({
               ? 'Try resetting your search query, subject filter, or visibility parameters.'
               : activeTab === 'my-uploaded'
               ? 'Upload revision decks, notes, PDFs, or photos. You can choose whether each item is Public or Private.'
-              : 'Bookmark resources from the public peer commons to organize them here.'}
+              : 'Bookmark resources from the public buddies commons to organize them here.'}
           </p>
 
           <div className="flex items-center justify-center gap-2">
@@ -941,7 +941,7 @@ export const ManageView: React.FC<ManageViewProps> = ({
                             ? (theme.isDark ? '1px solid rgba(168, 85, 247, 0.45)' : '1px solid rgba(168, 85, 247, 0.35)')
                             : '1px solid transparent',
                         }}
-                        title="Set to Public only (visible to peers & community)"
+                        title="Set to Public only (visible to buddies & community)"
                         aria-pressed={res.isPublic}
                       >
                         <Globe className={`w-3.5 h-3.5 ${res.isPublic ? 'text-purple-500' : ''}`} />

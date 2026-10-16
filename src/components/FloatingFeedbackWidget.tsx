@@ -43,7 +43,7 @@ const INITIAL_REVIEWS: UserReview[] = [
     name: 'Liam Davies',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face&auto=format&q=80',
     rating: 5,
-    comment: 'Best peer notes archive I have used this semester. Uploading notes was super fast and didn’t require annoying paywalls.',
+    comment: 'Best study notes archive from buddies I have used this semester. Uploading notes was super fast and didn’t require annoying paywalls.',
     date: 'Yesterday',
     verified: true,
     helpfulCount: 12,
@@ -238,7 +238,7 @@ export const FloatingFeedbackWidget: React.FC<FloatingFeedbackWidgetProps> = ({
                   </span>
                 </h3>
                 <p className="text-[10px] font-medium" style={{ color: theme.textMuted }}>
-                  Community feedback & peer reviews
+                  Community feedback & buddy reviews
                 </p>
               </div>
             </div>
