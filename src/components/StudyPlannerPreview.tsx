@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Circle, Clock, Calendar, ArrowRight, Play, Sparkles } from 'lucide-react';
+import { CheckCircle2, Circle, Calendar, ArrowRight, Sparkles } from 'lucide-react';
 import type { StudyTask } from '../types/index.ts';
 import { ThemeColors } from '../utils/theme.ts';
 
@@ -17,8 +17,6 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
   userEmail,
 }) => {
   const [tasks, setTasks] = useState<StudyTask[]>(initialTasks);
-  const [isFocusRunning, setIsFocusRunning] = useState(false);
-  const [focusSeconds, setFocusSeconds] = useState(25 * 60);
 
   const toggleTask = (id: string) => {
     setTasks((prev) =>
@@ -28,12 +26,6 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
-
-  const formatTimer = (totalSecs: number) => {
-    const mins = Math.floor(totalSecs / 60);
-    const secs = totalSecs % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const username = userEmail ? userEmail.split('@')[0] : 'Scholar';
 
@@ -131,32 +123,12 @@ export const StudyPlannerPreview: React.FC<StudyPlannerPreviewProps> = ({
                   border: `1px solid ${theme.surfaceBorder}`,
                 }}
               >
-                {/* Header with Pomodoro / Focus Timer preview */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b gap-3" style={{ borderColor: theme.surfaceBorder }}>
+                <div className="flex items-center justify-between pb-4 mb-4 border-b gap-3" style={{ borderColor: theme.surfaceBorder }}>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-emerald-600" />
                     <span className="font-bold text-sm" style={{ color: theme.textPrimary }}>
                       Today's Revision Agenda
                     </span>
-                  </div>
-
-                  <div
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold self-start sm:self-auto"
-                    style={{
-                      backgroundColor: theme.isDark ? 'rgba(188, 233, 213, 0.15)' : '#BCE9D5',
-                      color: theme.isDark ? '#D1FAE5' : '#164E3A',
-                    }}
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Focus Block: {formatTimer(focusSeconds)}</span>
-                    <button
-                      type="button"
-                      onClick={() => setIsFocusRunning(!isFocusRunning)}
-                      className="ml-1 p-1 rounded hover:bg-black/10 transition-colors"
-                      aria-label={isFocusRunning ? 'Pause timer' : 'Start timer'}
-                    >
-                      <Play className={`w-3 h-3 ${isFocusRunning ? 'fill-current' : ''}`} />
-                    </button>
                   </div>
                 </div>
 
