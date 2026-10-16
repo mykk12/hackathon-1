@@ -55,6 +55,7 @@ export default function App() {
 
   // Authentication State
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [loginInitialMethod, setLoginInitialMethod] = useState<'options' | 'google' | 'email-otp' | 'phone-otp'>('options');
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(() => {
     return localStorage.getItem('study_user_email') || null;
@@ -302,7 +303,14 @@ export default function App() {
           isBrightnessOpen={isBrightnessOpen}
           onToggleBrightness={() => setIsBrightnessOpen((prev) => !prev)}
           onCloseBrightness={() => setIsBrightnessOpen(false)}
-          onOpenLogin={() => setIsLoginOpen(true)}
+          onOpenLogin={() => {
+            setLoginInitialMethod('options');
+            setIsLoginOpen(true);
+          }}
+          onOpenGoogleLogin={() => {
+            setLoginInitialMethod('google');
+            setIsLoginOpen(true);
+          }}
           onOpenRegister={() => setIsRegisterOpen(true)}
           userEmail={currentUser}
           onLogout={() => {
@@ -476,6 +484,7 @@ export default function App() {
       {/* Login Modal */}
       <LoginModal
         isOpen={isLoginOpen}
+        initialMethod={loginInitialMethod}
         onClose={() => {
           setIsLoginOpen(false);
           setPendingTab(null);

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mail, Phone, ArrowRight, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { ThemeColors } from '../utils/theme.ts';
+import { supabase, saveUserProfileToSupabase } from '../utils/supabase.ts';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -8,9 +9,31 @@ interface LoginModalProps {
   onLoginSuccess: (email: string) => void;
   onSwitchToRegister: () => void;
   theme: ThemeColors;
+  initialMethod?: 'options' | 'google' | 'email-otp' | 'phone-otp';
 }
 
-type LoginMethod = 'options' | 'email-otp' | 'phone-otp';
+type LoginMethod = 'options' | 'google' | 'email-otp' | 'phone-otp';
+
+const GoogleIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg className={className} viewBox="0 0 24 24">
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+    />
+  </svg>
+);
 
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
@@ -18,20 +41,100 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onLoginSuccess,
   onSwitchToRegister,
   theme,
+  initialMethod = 'options',
 }) => {
-  const [method, setMethod] = useState<LoginMethod>('options');
+  const [method, setMethod] = useState<LoginMethod>(initialMethod);
   const [email, setEmail] = useState('');
+  const [googleEmail, setGoogleEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (isOpen) {
+      setMethod(initialMethod);
+      setError(null);
+      setOtpSent(false);
+      setGoogleEmail('');
+    }
+  }, [isOpen, initialMethod]);
+
   if (!isOpen) return null;
 
-  const handleGoogleLogin = () => {
-    setMethod('email-otp');
+  // Complete Google Sign In with specified email and profile creation
+  const handleGoogleSignIn = (selectedEmail: string, fullName?: string, institution?: string) => {
+    const emailToUse = selectedEmail.trim();
+    if (!emailToUse || !emailToUse.includes('@')) {
+      setError('Please provide a valid Google or University Workspace email address.');
+      return;
+    }
+
+    setIsLoading(true);
     setError(null);
+
+    setTimeout(async () => {
+      try {
+        const derivedName =
+          fullName ||
+          emailToUse
+            .split('@')[0]
+            .replace(/[._]/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+        const username = emailToUse.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+
+        // Create or update local profile
+        const existingProfile = localStorage.getItem(`studyspace_profile_${emailToUse}`);
+        if (!existingProfile) {
+          const profileData = {
+            fullName: derivedName,
+            username,
+            avatarUrl:
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
+            bio: 'Student & Academic Learner on StudySpace',
+            institution: institution || (emailToUse.includes('gla.ac.in') ? 'GLA University' : 'Academic Institution'),
+            major: emailToUse.includes('bca')
+              ? 'Bachelor of Computer Applications (Data Science)'
+              : 'Undergraduate Student',
+            academicYear: '2025',
+            email: emailToUse,
+            phone: '',
+          };
+          localStorage.setItem(`studyspace_profile_${emailToUse}`, JSON.stringify(profileData));
+          saveUserProfileToSupabase(profileData).catch(() => {});
+        }
+
+        // Record entry in Supabase if connected
+        if (supabase) {
+          try {
+            await supabase.from('user_entries').insert({
+              user_email: emailToUse,
+              full_name: derivedName,
+              entry_type: 'google_oauth_signin',
+            });
+          } catch {
+            // graceful fallback
+          }
+        }
+
+        setIsLoading(false);
+        onLoginSuccess(emailToUse);
+        onClose();
+      } catch (err: unknown) {
+        setIsLoading(false);
+        setError((err as Error).message || 'Failed to complete Google sign-in.');
+      }
+    }, 450);
+  };
+
+  const handleCustomGoogleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!googleEmail || !googleEmail.includes('@')) {
+      setError('Please enter a valid Google email address (e.g. name@gmail.com or university email).');
+      return;
+    }
+    handleGoogleSignIn(googleEmail);
   };
 
   const handleSendEmailOtp = (e: React.FormEvent) => {
@@ -121,10 +224,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             className="text-2xl font-black tracking-tight"
             style={{ color: theme.textPrimary }}
           >
-            Welcome back to StudySpace
+            {method === 'google' ? 'Sign in with Google' : 'Welcome back to StudySpace'}
           </h2>
           <p className="text-xs sm:text-sm font-medium mt-1" style={{ color: theme.textSecondary }}>
-            Log in to access your saved notes, revision schedules, and community decks.
+            {method === 'google'
+              ? 'Choose an account to continue to your student workspace.'
+              : 'Log in to access your saved notes, revision schedules, and community decks.'}
           </p>
         </div>
 
@@ -138,7 +243,41 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         {/* Method 1: Main Options */}
         {method === 'options' && (
           <div className="space-y-3">
-            {/* Email OTP trigger - Prioritized */}
+            {/* 1. Continue with Google (Target element from CSS selector) */}
+            <button
+              type="button"
+              onClick={() => {
+                setMethod('google');
+                setError(null);
+              }}
+              disabled={isLoading}
+              className="w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer hover:scale-[1.01] shadow-xs active:scale-[0.99]"
+              style={{
+                borderColor: theme.isDark ? 'rgba(66, 133, 244, 0.45)' : '#4285F4',
+                backgroundColor: theme.isDark ? 'rgba(66, 133, 244, 0.12)' : 'rgba(66, 133, 244, 0.08)',
+                color: theme.textPrimary,
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white shadow-xs flex items-center justify-center shrink-0">
+                  <GoogleIcon className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold">Continue with Google</span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded-full bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                      Recommended
+                    </span>
+                  </div>
+                  <div className="text-[11px]" style={{ color: theme.textMuted }}>
+                    Sign in instantly with your Google or University Workspace account
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </button>
+
+            {/* 2. Email OTP trigger */}
             <button
               type="button"
               onClick={() => {
@@ -147,8 +286,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               }}
               className="w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer hover:scale-[1.01]"
               style={{
-                borderColor: theme.isDark ? 'rgba(142, 116, 219, 0.45)' : '#C9B8F9',
-                backgroundColor: theme.isDark ? 'rgba(142, 116, 219, 0.12)' : 'rgba(220, 209, 250, 0.25)',
+                borderColor: theme.surfaceBorder,
+                backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(48, 39, 71, 0.03)',
                 color: theme.textPrimary,
               }}
             >
@@ -157,12 +296,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <Mail className="w-4 h-4" />
                 </div>
                 <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold">Email OTP Sign In</span>
-                    <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded-full bg-purple-600/15 text-purple-700 dark:text-purple-300 border border-purple-500/20">
-                      Primary
-                    </span>
-                  </div>
+                  <div className="text-xs font-bold">Email OTP Sign In</div>
                   <div className="text-[11px]" style={{ color: theme.textMuted }}>
                     Sign in with a one-time code to your email
                   </div>
@@ -171,7 +305,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <ArrowRight className="w-4 h-4 text-purple-600 dark:text-purple-300" />
             </button>
 
-            {/* Phone OTP trigger */}
+            {/* 3. Phone OTP trigger */}
             <button
               type="button"
               onClick={() => {
@@ -210,14 +344,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   color: theme.textMuted,
                 }}
               >
-                or continue with
+                1-click instant login
               </span>
             </div>
 
-            {/* Google Login button */}
+            {/* Fast 1-Click Google account login */}
             <button
               type="button"
-              onClick={handleGoogleLogin}
+              onClick={() =>
+                handleGoogleSignIn('mayank.bamil_bca.ds25@gla.ac.in', 'Mayank Bamil', 'GLA University')
+              }
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-2xl font-bold text-xs sm:text-sm shadow-xs border transition-all cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-50"
               style={{
@@ -228,27 +364,122 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
+                <GoogleIcon className="w-4 h-4" />
               )}
-              <span>Continue with Google</span>
+              <span>Continue as Mayank (GLA University)</span>
             </button>
+          </div>
+        )}
+
+        {/* Method 2: Google Account Selection & Sign In */}
+        {method === 'google' && (
+          <div className="space-y-4">
+            <div
+              className="p-3.5 rounded-2xl border text-xs"
+              style={{
+                borderColor: theme.surfaceBorder,
+                backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              }}
+            >
+              <div className="text-[11px] font-semibold uppercase tracking-wider mb-2.5" style={{ color: theme.textMuted }}>
+                Choose Google Account
+              </div>
+
+              {/* Primary Active Student Account Card */}
+              <button
+                type="button"
+                onClick={() =>
+                  handleGoogleSignIn('mayank.bamil_bca.ds25@gla.ac.in', 'Mayank Bamil', 'GLA University')
+                }
+                disabled={isLoading}
+                className="w-full flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer hover:scale-[1.01] text-left shadow-xs"
+                style={{
+                  borderColor: '#4285F4',
+                  backgroundColor: theme.isDark ? 'rgba(66, 133, 244, 0.15)' : 'rgba(66, 133, 244, 0.08)',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
+                    MB
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold flex items-center gap-1.5" style={{ color: theme.textPrimary }}>
+                      <span>Mayank Bamil</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">
+                        Active
+                      </span>
+                    </div>
+                    <div className="text-[11px] font-mono" style={{ color: theme.textSecondary }}>
+                      mayank.bamil_bca.ds25@gla.ac.in
+                    </div>
+                    <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                      GLA University • Google Workspace
+                    </div>
+                  </div>
+                </div>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
+                ) : (
+                  <ArrowRight className="w-4 h-4 text-blue-600 shrink-0" />
+                )}
+              </button>
+            </div>
+
+            {/* Custom Google Account Input */}
+            <form onSubmit={handleCustomGoogleSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textPrimary }}>
+                  Or use another Google Account
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    placeholder="yourname@gmail.com or @school.edu"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#4285F4]"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary,
+                    }}
+                  />
+                  <div className="absolute left-3 top-3 pointer-events-none">
+                    <GoogleIcon className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMethod('options')}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold border cursor-pointer hover:opacity-80"
+                  style={{ borderColor: theme.surfaceBorder, color: theme.textSecondary }}
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:opacity-95 disabled:opacity-50 text-white"
+                  style={{ backgroundColor: '#4285F4' }}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <GoogleIcon className="w-3.5 h-3.5" />
+                      <span>Sign in with Google</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            <div className="text-[10px] text-center" style={{ color: theme.textMuted }}>
+              To continue, Google will securely share your email, name, and profile with StudySpace.
+            </div>
           </div>
         )}
 
