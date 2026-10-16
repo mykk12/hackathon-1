@@ -430,6 +430,11 @@ export default function App() {
         onToggleBookmark={handleToggleBookmark}
         theme={theme}
         currentUser={currentUser}
+        onLoginSuccess={(email) => {
+          setCurrentUser(email);
+          localStorage.setItem('study_user_email', email);
+        }}
+        onOpenLoginModal={() => setIsLoginOpen(true)}
       />
 
       {/* Share / Upload Resource Modal */}

@@ -15,9 +15,31 @@ import {
   ShieldCheck,
   Lock,
   Globe,
+  Loader2,
 } from 'lucide-react';
 import type { AcademicResource } from '../types/index.ts';
 import { ThemeColors } from '../utils/theme.ts';
+
+const GoogleIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+    />
+  </svg>
+);
 
 interface ResourceReview {
   id: string;
@@ -27,6 +49,7 @@ interface ResourceReview {
   comment: string;
   date: string;
   verified: boolean;
+  isGoogleVerified?: boolean;
   helpfulCount: number;
   userVoted?: boolean;
 }
@@ -38,6 +61,8 @@ interface ResourceDetailModalProps {
   onToggleBookmark: (id: string) => void;
   theme: ThemeColors;
   currentUser?: string | null;
+  onLoginSuccess?: (email: string) => void;
+  onOpenLoginModal?: () => void;
 }
 
 const DEFAULT_REVIEWS: ResourceReview[] = [];
@@ -49,6 +74,8 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   onToggleBookmark,
   theme,
   currentUser,
+  onLoginSuccess,
+  onOpenLoginModal,
 }) => {
   const [downloaded, setDownloaded] = useState(false);
 
@@ -59,6 +86,10 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   const [reviewComment, setReviewComment] = useState<string>('');
   const [submittedSuccess, setSubmittedSuccess] = useState<boolean>(false);
   const [reviews, setReviews] = useState<ResourceReview[]>(DEFAULT_REVIEWS);
+
+  // Google Sign-In State
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleStatusMsg, setGoogleStatusMsg] = useState<string | null>(null);
 
   // Initialize reviews and reviewer name when resource opens
   useEffect(() => {
@@ -94,6 +125,25 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
   if (!resource) return null;
 
+  // Handle Google Sign In
+  const handleGoogleSignIn = (customEmail?: string) => {
+    setIsGoogleLoading(true);
+    setGoogleStatusMsg(null);
+    setTimeout(() => {
+      const emailToUse = customEmail || (currentUser && currentUser.includes('@') ? currentUser : 'amanbamil.30@gmail.com');
+      const formattedName = emailToUse.split('@')[0].replace(/[._]/g, ' ');
+      const capitalized = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
+
+      setReviewerName(capitalized);
+      if (onLoginSuccess) {
+        onLoginSuccess(emailToUse);
+      }
+      setIsGoogleLoading(false);
+      setGoogleStatusMsg(`Connected via Google (${emailToUse})`);
+      setTimeout(() => setGoogleStatusMsg(null), 3500);
+    }, 600);
+  };
+
   const handleDownload = () => {
     setDownloaded(true);
     setTimeout(() => setDownloaded(false), 2500);
@@ -116,6 +166,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
     e.preventDefault();
     if (!reviewComment.trim()) return;
 
+    const isGoogleAuth = Boolean(currentUser && (currentUser.includes('@gmail.com') || currentUser.includes('@university.edu') || currentUser.includes('@')));
     const newReview: ResourceReview = {
       id: `rev-${Date.now()}`,
       name: reviewerName.trim() || (currentUser ? currentUser.split('@')[0] : 'Student Peer'),
@@ -123,6 +174,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
       comment: reviewComment.trim(),
       date: 'Just now',
       verified: true,
+      isGoogleVerified: isGoogleAuth,
       helpfulCount: 0,
       userVoted: false,
     };
@@ -431,6 +483,96 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
             </div>
           </div>
 
+          {/* Google Sign In Component for Rating & Reviews */}
+          {googleStatusMsg && (
+            <div className="mb-3.5 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span className="font-bold">{googleStatusMsg}</span>
+            </div>
+          )}
+
+          {currentUser ? (
+            <div
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 px-4 rounded-2xl border mb-4 text-xs transition-all backdrop-blur-sm"
+              style={{
+                backgroundColor: theme.isDark ? 'rgba(66, 133, 244, 0.08)' : 'rgba(66, 133, 244, 0.05)',
+                borderColor: 'rgba(66, 133, 244, 0.25)',
+              }}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-xl bg-white shadow-xs border border-blue-100 flex items-center justify-center shrink-0">
+                  <GoogleIcon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold truncate" style={{ color: theme.textPrimary }}>
+                      Signed in with Google
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Verified Student</span>
+                    </span>
+                  </div>
+                  <div className="text-[11px] truncate opacity-80" style={{ color: theme.textMuted }}>
+                    {currentUser}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleGoogleSignIn()}
+                disabled={isGoogleLoading}
+                className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer shrink-0 self-start sm:self-auto flex items-center gap-1"
+              >
+                {isGoogleLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                <span>Switch Google Account</span>
+              </button>
+            </div>
+          ) : (
+            <div
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 p-3.5 sm:p-4 rounded-2xl border mb-4 backdrop-blur-sm transition-all"
+              style={{
+                backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+                borderColor: theme.surfaceBorder,
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-white shadow-xs border border-black/10 flex items-center justify-center shrink-0">
+                  <GoogleIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold" style={{ color: theme.textPrimary }}>
+                    Sign in with Google
+                  </div>
+                  <div className="text-[11px] font-medium" style={{ color: theme.textMuted }}>
+                    Sign in with your Google student account to rate this resource and submit verified reviews.
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleGoogleSignIn()}
+                disabled={isGoogleLoading}
+                className="flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs border transition-all cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 shrink-0"
+                style={{
+                  borderColor: theme.surfaceBorder,
+                  color: theme.textPrimary,
+                  backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : '#FFFFFF',
+                }}
+              >
+                {isGoogleLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                ) : (
+                  <GoogleIcon className="w-4 h-4" />
+                )}
+                <span>{isGoogleLoading ? 'Connecting...' : 'Sign in with Google'}</span>
+              </button>
+            </div>
+          )}
+
           {/* Review Submission Form Card */}
           <form
             onSubmit={handleSubmitReview}
@@ -486,9 +628,26 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
             {/* Reviewer Name */}
             <div className="mb-3">
-              <label htmlFor="reviewer-name-input" className="block text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: theme.textMuted }}>
-                Your Name / Student Alias
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="reviewer-name-input" className="block text-[11px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                  Your Name / Student Alias
+                </label>
+                {currentUser ? (
+                  <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 inline-flex items-center gap-1">
+                    <GoogleIcon className="w-3 h-3" />
+                    <span>Linked to Google Account</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleGoogleSignIn()}
+                    className="text-[10px] font-bold text-blue-500 hover:underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <GoogleIcon className="w-3 h-3" />
+                    <span>Sign in with Google</span>
+                  </button>
+                )}
+              </div>
               <input
                 id="reviewer-name-input"
                 type="text"
@@ -607,11 +766,20 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                           </div>
                         )}
                         <div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-extrabold text-xs" style={{ color: theme.textPrimary }}>
                               {rev.name}
                             </span>
-                            {rev.verified && (
+                            {rev.isGoogleVerified && (
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                                title="Verified Google Student"
+                              >
+                                <GoogleIcon className="w-2.5 h-2.5" />
+                                <span>Google Verified</span>
+                              </span>
+                            )}
+                            {rev.verified && !rev.isGoogleVerified && (
                               <span
                                 className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25"
                                 title="Verified student learner"

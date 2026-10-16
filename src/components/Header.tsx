@@ -188,32 +188,21 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Left: StudySpace Brand Logo & Horizontal Nav Links beside it */}
           <div className="flex items-center gap-3 lg:gap-6">
-            {/* StudySpace Logo */}
+            {/* OriginKit Crystal Glow Brand Component */}
             <button
               type="button"
               onClick={() => handleNavClick('home')}
-              className="flex items-center gap-2.5 text-left cursor-pointer group focus:outline-none"
-              aria-label="StudySpace Home"
+              className="relative text-left cursor-pointer group focus:outline-none select-none"
+              aria-label="StudySpace"
+              title="StudySpace"
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm transition-transform group-hover:scale-105"
-                style={{
-                  backgroundColor: '#DCD1FA',
-                  color: '#302747',
-                  border: '1px solid rgba(48, 39, 71, 0.12)',
-                }}
-              >
-                S
-              </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight leading-none text-white">
+              <div className="crystal-glow-btn flex items-center px-4 py-1.5 sm:px-5 sm:py-2 rounded-2xl transition-all duration-300">
+                {/* Crystal Glare Sweep Animation */}
+                <div className="crystal-glare-sweep pointer-events-none" aria-hidden="true" />
+
+                {/* Website Brand Name (Enlarged) */}
+                <span className="font-black text-2xl sm:text-3xl lg:text-[34px] tracking-tight leading-none bg-gradient-to-r from-white via-[#EDE9FE] to-[#DCD1FA] bg-clip-text text-transparent drop-shadow-[0_0_16px_rgba(220,209,250,0.6)]">
                   StudySpace
-                </span>
-                <span
-                  className="text-[10px] font-semibold tracking-wider uppercase opacity-85"
-                  style={{ color: '#DCD1FA' }}
-                >
-                  Academic Platform
                 </span>
               </div>
             </button>
